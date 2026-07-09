@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { useSearch } from 'wouter';
 import { useGetUniversity, getGetUniversityQueryKey } from '@workspace/api-client-react';
-import { MapPin, Globe, ExternalLink, GraduationCap, Building2, BookOpen } from 'lucide-react';
+import { MapPin, Globe, ExternalLink, GraduationCap, Building2, BookOpen, HeartHandshake } from 'lucide-react';
 import { Link } from 'wouter';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
 import { ArrowLeft } from 'lucide-react';
@@ -73,6 +73,10 @@ export default function UniversityDetail() {
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">{uni.name}</h1>
 
               <div className="flex flex-wrap gap-4">
+                <Link href="/services" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary text-sm font-semibold transition-colors">
+                  <HeartHandshake className="w-4 h-4" />
+                  {t('services.consultingCta')}
+                </Link>
                 {uni.website_url && (
                   <a href={uni.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-secondary text-sm font-medium transition-colors">
                     <Globe className="w-4 h-4 text-primary" />

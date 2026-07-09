@@ -9,6 +9,7 @@ import Home from '@/pages/Home';
 import Explore from '@/pages/Explore';
 import UniversityDetail from '@/pages/University';
 import ProgramDetail from '@/pages/Program';
+import Services from '@/pages/Services';
 
 import '@/i18n'; // Initialize i18n
 
@@ -30,6 +31,7 @@ function Router() {
         <Route path="/explore" component={Explore} />
         <Route path="/university" component={UniversityDetail} />
         <Route path="/program" component={ProgramDetail} />
+        <Route path="/services" component={Services} />
         <Route component={NotFound} />
       </Switch>
     </>

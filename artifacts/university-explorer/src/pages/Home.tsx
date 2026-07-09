@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { Link } from 'wouter';
-import { MapPin, ArrowRight, GraduationCap, Building2, Search, BookOpen } from 'lucide-react';
+import { MapPin, ArrowRight, GraduationCap, Building2, Search, BookOpen, HeartHandshake, Sparkles } from 'lucide-react';
 import { 
   useGetStatsOverview, 
   useGetStatsCities, 
@@ -173,6 +173,35 @@ export default function Home() {
             <Link href="/explore" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors">
               {t('common.all')} <DirectionalIcon icon={ArrowRight} className="w-4 h-4" />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Expert Consulting CTA */}
+      <section className="py-20 px-6 border-t border-border">
+        <div className="max-w-5xl mx-auto">
+          <div className="relative bg-card border border-primary/20 rounded-3xl p-12 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,hsl(var(--primary)/0.12),transparent_60%)]" />
+            <div className="absolute end-0 top-0 w-80 h-80 opacity-[0.04]">
+              <HeartHandshake className="w-full h-full text-primary" />
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider mb-5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {t('services.consultingBadge')}
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">{t('services.consultingTitle')}</h2>
+                <p className="text-muted-foreground text-lg leading-relaxed">{t('services.consultingDesc')}</p>
+              </div>
+              <div className="shrink-0 flex flex-col gap-3 w-full md:w-auto">
+                <Link href="/services" className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 rounded-xl font-bold text-base hover:bg-primary/90 transition-all shadow-[0_0_30px_-10px_hsl(var(--primary))] whitespace-nowrap">
+                  {t('services.consultingCta')}
+                  <DirectionalIcon icon={ArrowRight} className="w-5 h-5" />
+                </Link>
+                <p className="text-xs text-muted-foreground text-center">{t('services.formNote')}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

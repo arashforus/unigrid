@@ -4,7 +4,7 @@ import { useSearch } from 'wouter';
 import { useGetProgram, getGetProgramQueryKey } from '@workspace/api-client-react';
 import { Link } from 'wouter';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
-import { ArrowLeft, Banknote, Clock, Globe, MapPin, Building2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Banknote, Clock, Globe, MapPin, Building2, ExternalLink, HeartHandshake } from 'lucide-react';
 
 export default function ProgramDetail() {
   const { t } = useTranslation();
@@ -132,6 +132,10 @@ export default function ProgramDetail() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/services" className="flex-1 py-4 rounded-xl border border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary text-lg font-bold transition-all flex items-center justify-center gap-2">
+            <HeartHandshake className="w-5 h-5" />
+            {t('services.consultingCta')}
+          </Link>
           <button className="flex-1 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold transition-all shadow-[0_0_30px_-10px_hsl(var(--primary))] flex items-center justify-center gap-2">
             {t('explore.applyNow')} <ExternalLink className="w-5 h-5" />
           </button>
