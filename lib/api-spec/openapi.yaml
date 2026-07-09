@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Turkey University Explorer API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: universities
+    description: University operations
+  - name: faculties
+    description: Faculty operations
+  - name: programs
+    description: Program operations
+  - name: tuition
+    description: Tuition fee operations
+  - name: stats
+    description: Statistics and summary operations
 paths:
   /healthz:
     get:
@@ -24,6 +34,256 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /universities:
+    get:
+      operationId: listUniversities
+      tags: [universities]
+      summary: List universities with optional filters
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+          description: Filter by city (English slug)
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [state, private, foundation]
+          description: Filter by university type
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Full-text search across names
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+            default: en
+          description: Language for localized name/city fields
+      responses:
+        "200":
+          description: List of universities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/University"
+
+  /universities/detail:
+    get:
+      operationId: getUniversity
+      tags: [universities]
+      summary: Get university by slug with faculties and programs
+      parameters:
+        - in: query
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+            default: en
+      responses:
+        "200":
+          description: University detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UniversityDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /faculties:
+    get:
+      operationId: listFaculties
+      tags: [faculties]
+      summary: List faculties, optionally filtered by university
+      parameters:
+        - in: query
+          name: university_id
+          schema:
+            type: integer
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+            default: en
+      responses:
+        "200":
+          description: List of faculties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Faculty"
+
+  /programs:
+    get:
+      operationId: listPrograms
+      tags: [programs]
+      summary: List programs with multi-filter support
+      parameters:
+        - in: query
+          name: faculty_id
+          schema:
+            type: integer
+        - in: query
+          name: university_id
+          schema:
+            type: integer
+        - in: query
+          name: degree_type
+          schema:
+            type: string
+            enum: [associate, bachelor, master, doctorate]
+        - in: query
+          name: language
+          schema:
+            type: string
+        - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
+          name: min_fee
+          schema:
+            type: number
+        - in: query
+          name: max_fee
+          schema:
+            type: number
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+            default: en
+        - in: query
+          name: is_active
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of programs with tuition info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgramWithDetails"
+
+  /programs/detail:
+    get:
+      operationId: getProgram
+      tags: [programs]
+      summary: Get a program by ID with tuition fees
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+            default: en
+      responses:
+        "200":
+          description: Program detail with tuition fees
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramWithDetails"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tuition-fees:
+    get:
+      operationId: listTuitionFees
+      tags: [tuition]
+      summary: List tuition fees for a program
+      parameters:
+        - in: query
+          name: program_id
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of tuition fees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TuitionFee"
+
+  /stats/overview:
+    get:
+      operationId: getStatsOverview
+      tags: [stats]
+      summary: Platform-wide statistics for the landing page
+      responses:
+        "200":
+          description: Overview statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsOverview"
+
+  /stats/cities:
+    get:
+      operationId: getStatsCities
+      tags: [stats]
+      summary: University and program counts grouped by city
+      responses:
+        "200":
+          description: City-level breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CityStats"
+
+  /stats/programs-by-degree:
+    get:
+      operationId: getStatsProgramsByDegree
+      tags: [stats]
+      summary: Program counts grouped by degree type
+      responses:
+        "200":
+          description: Programs grouped by degree type
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DegreeStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +294,168 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    University:
+      type: object
+      required: [id, slug, type, name, city, logo_url, website_url]
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        type:
+          type: string
+          enum: [state, private, foundation]
+        name:
+          type: string
+          description: Localized name
+        city:
+          type: string
+          description: Localized city name
+        logo_url:
+          type: ["string", "null"]
+        website_url:
+          type: ["string", "null"]
+        apply_url_international:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+          description: Localized description
+
+    UniversityDetail:
+      allOf:
+        - $ref: "#/components/schemas/University"
+        - type: object
+          properties:
+            faculties:
+              type: array
+              items:
+                $ref: "#/components/schemas/FacultyWithPrograms"
+
+    Faculty:
+      type: object
+      required: [id, university_id, name]
+      properties:
+        id:
+          type: integer
+        university_id:
+          type: integer
+        name:
+          type: string
+          description: Localized name
+
+    FacultyWithPrograms:
+      allOf:
+        - $ref: "#/components/schemas/Faculty"
+        - type: object
+          properties:
+            programs:
+              type: array
+              items:
+                $ref: "#/components/schemas/Program"
+
+    Program:
+      type: object
+      required: [id, faculty_id, name, degree_type, language, duration_years, is_active]
+      properties:
+        id:
+          type: integer
+        faculty_id:
+          type: integer
+        name:
+          type: string
+          description: Localized name
+        yok_atlas_code:
+          type: ["string", "null"]
+        degree_type:
+          type: string
+          enum: [associate, bachelor, master, doctorate]
+        language:
+          type: string
+        duration_years:
+          type: integer
+        is_active:
+          type: boolean
+
+    ProgramWithDetails:
+      allOf:
+        - $ref: "#/components/schemas/Program"
+        - type: object
+          properties:
+            university_name:
+              type: ["string", "null"]
+            university_slug:
+              type: ["string", "null"]
+            university_logo:
+              type: ["string", "null"]
+            faculty_name:
+              type: ["string", "null"]
+            city:
+              type: ["string", "null"]
+            tuition_fees:
+              type: array
+              items:
+                $ref: "#/components/schemas/TuitionFee"
+
+    TuitionFee:
+      type: object
+      required: [id, program_id, academic_year, currency]
+      properties:
+        id:
+          type: integer
+        program_id:
+          type: integer
+        academic_year:
+          type: string
+        domestic_fee:
+          type: ["number", "null"]
+        international_fee:
+          type: ["number", "null"]
+        currency:
+          type: string
+
+    StatsOverview:
+      type: object
+      required: [total_universities, state_universities, private_universities, total_programs, total_cities, total_faculties]
+      properties:
+        total_universities:
+          type: integer
+        state_universities:
+          type: integer
+        private_universities:
+          type: integer
+        foundation_universities:
+          type: integer
+        total_programs:
+          type: integer
+        total_cities:
+          type: integer
+        total_faculties:
+          type: integer
+
+    CityStats:
+      type: object
+      required: [city, university_count, program_count]
+      properties:
+        city:
+          type: string
+        university_count:
+          type: integer
+        program_count:
+          type: integer
+
+    DegreeStats:
+      type: object
+      required: [degree_type, program_count]
+      properties:
+        degree_type:
+          type: string
+        program_count:
+          type: integer

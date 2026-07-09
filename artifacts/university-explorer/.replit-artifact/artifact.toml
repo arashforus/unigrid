@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Turkey University Explorer"
+version = "1.0.0"
+id = "artifacts/university-explorer"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21403
+
+[services.development]
+run = "pnpm --filter @workspace/university-explorer run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/university-explorer", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/university-explorer/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21403"
+BASE_PATH = "/"

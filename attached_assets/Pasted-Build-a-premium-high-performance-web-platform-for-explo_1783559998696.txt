@@ -1,0 +1,25 @@
+Build a premium, high-performance web platform for exploring and applying to universities in Turkey, fully optimized for four localized markets: English, Turkish, Persian (Farsi), and Arabic.
+
+### Tech Stack Specifications:
+- **Framework:** Next.js (App Router) with TypeScript.
+- **Internationalization:** Configure router-based localization using `next-intl` matching languages: 'en', 'tr', 'fa', 'ar'.
+- **RTL Support Architecture:** The main layout wrapper must track the layout direction (`dir="rtl"` for 'fa' and 'ar', `dir="ltr"` for 'en' and 'tr'). Use Tailwind logical formatting selectors (`ms-*`, `me-*`, `text-start`) so that all navigations, structural columns, fields, and icon nodes mirror flawlessly.
+- **Styling:** Custom dark theme backdrop accented with sharp cyan details.
+- **Database:** PostgreSQL initialized via Drizzle ORM (or Prisma) using the localization-ready schema outlined below.
+- **Icons:** Lucide React (ensure flip properties are added on arrow elements during RTL layouts).
+
+### Database Architecture to Create:
+1. `universities` (id, name_en, name_tr, name_fa, name_ar, slug, type, city_en, city_tr, city_fa, city_ar, website_url, apply_url_international, logo_url, description_en, description_tr, description_fa, description_ar)
+2. `faculties` (id, university_id, name_en, name_tr, name_fa, name_ar)
+3. `programs` (id, faculty_id, name_en, name_tr, name_fa, name_ar, yok_atlas_code, degree_type, language, duration_years, is_active)
+4. `tuition_fees` (id, program_id, academic_year, domestic_fee, international_fee, currency)
+
+### Core Layouts & Features to Build:
+1. **Dynamic Language Navigation:** Implement a sticky global navbar containing a language dropdown component. Switching selections must transition routing parameters securely while preserving ongoing filtering configurations.
+2. **Landing View Layout:** Clean entry point showing a prominent centralized universal search bar, comparative state-versus-private breakdowns, and descriptive fast-track pathways optimized for international students entering Turkey.
+3. **Advanced Filter Engine (/explore):** 
+   - A multi-select filter matrix matching categories (City, Degree Track, Instruction Language, Tuition Scale Ranges).
+   - Results Display: Information grid mapping courses, translation strings mapped to active viewport variables, transparent tracking tables showing cost tiers, and responsive "Apply Now" CTA components.
+4. **Mock Database Seeding:** Seed data for 5 major universities (e.g., Boğaziçi, ITU, Koç, Sabancı, Bilkent) with valid name, city, and description definitions translated accurately across all 4 target languages.
+
+Let's begin by configuring the [locale] routes, initializing the database schema models, running migrations, and setting up the core bi-directional layout.
