@@ -137,5 +137,23 @@ export default {
     state: "Devlet",
     private: "Özel",
     foundation: "Vakıf",
+  },
+  auth: {
+    signIn: "Giriş Yap",
+    createAccount: "Hesap Oluştur",
+    welcomeBack: "Tekrar Hoş Geldiniz",
+    joinTitle: "UniTurkey'e Katılın",
+    loginSubtitle: "Başvurularınızı ve kaydettiğiniz programları takip etmek için giriş yapın.",
+    registerSubtitle: "Türk üniversitelerine giden yolculuğunuza başlamak için hesap oluşturun.",
+    fullName: "Ad Soyad",
+    fullNamePlaceholder: "Adınız ve soyadınız",
+    email: "E-posta Adresi",
+    password: "Şifre",
+    passwordPlaceholder: "Şifrenizi girin",
+    or: "VEYA",
+    needHelp: "Üniversite seçiminde yardıma mı ihtiyacınız var? Danışmanlarımızla konuşun",
+    privacyNote: "Devam ederek koşullarımızı ve gizlilik politikamızı kabul etmiş olursunuz.",
+    logout: "Çıkış Yap",
+    genericError: "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
   }
 };

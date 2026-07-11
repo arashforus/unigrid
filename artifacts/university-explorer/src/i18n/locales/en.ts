@@ -137,5 +137,23 @@ export default {
     state: "State",
     private: "Private",
     foundation: "Foundation",
+  },
+  auth: {
+    signIn: "Sign In",
+    createAccount: "Create Account",
+    welcomeBack: "Welcome Back",
+    joinTitle: "Join UniTurkey",
+    loginSubtitle: "Sign in to track your applications and saved programs.",
+    registerSubtitle: "Create an account to start your journey to Turkish universities.",
+    fullName: "Full Name",
+    fullNamePlaceholder: "Your full name",
+    email: "Email Address",
+    password: "Password",
+    passwordPlaceholder: "Enter your password",
+    or: "OR",
+    needHelp: "Need help choosing a university? Talk to our advisors",
+    privacyNote: "By continuing, you agree to our terms and privacy policy.",
+    logout: "Log Out",
+    genericError: "Something went wrong. Please try again.",
   }
 };

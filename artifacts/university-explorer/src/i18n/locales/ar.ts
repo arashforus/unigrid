@@ -137,5 +137,23 @@ export default {
     state: "حكومي",
     private: "خاص",
     foundation: "مؤسسة",
+  },
+  auth: {
+    signIn: "تسجيل الدخول",
+    createAccount: "إنشاء حساب",
+    welcomeBack: "مرحباً بعودتك",
+    joinTitle: "انضم إلى UniTurkey",
+    loginSubtitle: "سجّل الدخول لمتابعة طلباتك والبرامج المحفوظة.",
+    registerSubtitle: "أنشئ حساباً لبدء رحلتك نحو الجامعات التركية.",
+    fullName: "الاسم الكامل",
+    fullNamePlaceholder: "اسمك الكامل",
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    passwordPlaceholder: "أدخل كلمة المرور",
+    or: "أو",
+    needHelp: "تحتاج مساعدة في اختيار جامعة؟ تحدث إلى مستشارينا",
+    privacyNote: "بالمتابعة، فإنك توافق على الشروط وسياسة الخصوصية.",
+    logout: "تسجيل الخروج",
+    genericError: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
   }
 };

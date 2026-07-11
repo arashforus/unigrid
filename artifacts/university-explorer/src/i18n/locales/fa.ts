@@ -137,5 +137,23 @@ export default {
     state: "دولتی",
     private: "خصوصی",
     foundation: "بنیاد",
+  },
+  auth: {
+    signIn: "ورود",
+    createAccount: "ایجاد حساب",
+    welcomeBack: "خوش آمدید",
+    joinTitle: "به یونی‌ترکی بپیوندید",
+    loginSubtitle: "برای پیگیری درخواست‌ها و برنامه‌های ذخیره‌شده وارد شوید.",
+    registerSubtitle: "برای شروع مسیر خود به سوی دانشگاه‌های ترکیه حساب بسازید.",
+    fullName: "نام کامل",
+    fullNamePlaceholder: "نام و نام خانوادگی شما",
+    email: "آدرس ایمیل",
+    password: "رمز عبور",
+    passwordPlaceholder: "رمز عبور خود را وارد کنید",
+    or: "یا",
+    needHelp: "برای انتخاب دانشگاه به کمک نیاز دارید؟ با مشاوران ما صحبت کنید",
+    privacyNote: "با ادامه، شما شرایط و سیاست حریم خصوصی ما را می‌پذیرید.",
+    logout: "خروج",
+    genericError: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
   }
 };

@@ -1,13 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
-import { Link } from 'wouter';
-import { MapPin, Globe, ChevronDown, Check, Search } from 'lucide-react';
+import { useAuth } from '@/contexts/auth';
+import { Link, useLocation } from 'wouter';
+import { MapPin, Globe, ChevronDown, Check, Search, User, LogOut } from 'lucide-react';
 
 export function Navbar() {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
+  const { user, logout } = useAuth();
+  const [, navigate] = useLocation();
   const [langMenuOpen, setLangMenuOpen] = React.useState(false);
+  const [userMenuOpen, setUserMenuOpen] = React.useState(false);
 
   const languages = [
     { code: 'en', label: 'English', short: 'EN' },
@@ -71,6 +75,47 @@ export function Navbar() {
               </div>
             )}
           </div>
+
+          <div className="w-px h-6 bg-border hidden md:block"></div>
+
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-md hover:bg-secondary transition-colors"
+              >
+                <div className="w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden sm:inline max-w-[100px] truncate">{user.name}</span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute end-0 top-full mt-2 w-44 bg-popover border border-popover-border rounded-xl shadow-xl overflow-hidden py-1 z-50">
+                  <button
+                    onClick={async () => {
+                      setUserMenuOpen(false);
+                      await logout();
+                      navigate('/');
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {t('auth.logout')}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <User className="w-4 h-4" />
+              {t('auth.signIn')}
+            </Link>
+          )}
         </div>
       </div>
     </nav>
