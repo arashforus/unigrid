@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { useAuth } from '@/contexts/auth';
 import { Link, useLocation } from 'wouter';
-import { MapPin, Globe, ChevronDown, Check, Search, User, LogOut } from 'lucide-react';
+import { MapPin, Globe, ChevronDown, Check, Search, User, LogOut, LayoutDashboard } from 'lucide-react';
 
 export function Navbar() {
   const { t } = useTranslation();
@@ -93,6 +93,16 @@ export function Navbar() {
 
               {userMenuOpen && (
                 <div className="absolute end-0 top-full mt-2 w-44 bg-popover border border-popover-border rounded-xl shadow-xl overflow-hidden py-1 z-50">
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Admin Panel
+                    </Link>
+                  )}
                   <button
                     onClick={async () => {
                       setUserMenuOpen(false);

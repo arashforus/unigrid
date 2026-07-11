@@ -1,0 +1,1 @@
+- [UniTurkey admin panel architecture](uniturkey-admin-panel.md) — role-gated `/admin` routes, raw-fetch API client bypassing Orval, `inquiries`→Tasks and `programs`→Courses mapping.
