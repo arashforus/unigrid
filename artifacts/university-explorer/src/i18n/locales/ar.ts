@@ -155,5 +155,57 @@ export default {
     privacyNote: "بالمتابعة، فإنك توافق على الشروط وسياسة الخصوصية.",
     logout: "تسجيل الخروج",
     genericError: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  },
+  news: {
+    sectionBadge: "آخر التحديثات",
+    sectionTitle: "الأخبار والرؤى",
+    sectionSubtitle: "ابقَ على اطلاع بآخر التطورات في التعليم العالي التركي والمنح الدراسية وحياة الطلاب.",
+    readMore: "اقرأ المزيد",
+    minRead: "د قراءة",
+    articles: [
+      {
+        category: "المنح الدراسية",
+        title: "منح تركيا 2025: تمويل كامل للطلاب الدوليين",
+        excerpt: "وسّعت الحكومة التركية برنامج منح تركيا بورسلاري، لتقديم تغطية كاملة للرسوم الدراسية والإقامة ومبلغ شهري لآلاف المتقدمين الدوليين.",
+        date: "15 يونيو 2025",
+        readTime: "4",
+        image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "الحياة الجامعية",
+        title: "كيف تبدو الحياة الدراسية في إسطنبول؟",
+        excerpt: "من الأحياء الطلابية النابضة بالحياة إلى مختبرات البحث ذات المستوى العالمي، تمنح إسطنبول الطلاب الدوليين مزيجاً فريداً من الثقافة والفرص والتميز الأكاديمي.",
+        date: "28 مايو 2025",
+        readTime: "5",
+        image: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "القبول",
+        title: "كيف تتقدم إلى الجامعات التركية: دليل خطوة بخطوة",
+        excerpt: "قد يكون التنقل في نظام تقديم الجامعات التركية أمراً معقداً. يشرح هذا الدليل كل خطوة — من إعداد الوثائق إلى طلبات التأشيرة — حتى تتمكن من التقديم بثقة.",
+        date: "10 مايو 2025",
+        readTime: "6",
+        image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
+      }
+    ]
+  },
+  footer: {
+    tagline: "دليلك الموثوق للتعليم العالي في تركيا.",
+    quickLinks: "روابط سريعة",
+    contact: "التواصل",
+    resources: "الموارد",
+    linkHome: "الرئيسية",
+    linkExplore: "استكشف الجامعات",
+    linkServices: "خدماتنا",
+    linkLogin: "تسجيل الدخول",
+    contactEmail: "info@uniturkey.com",
+    contactPhone: "+90 212 000 00 00",
+    contactAddress: "إسطنبول، تركيا",
+    resourcesAbout: "من نحن",
+    resourcesPrivacy: "سياسة الخصوصية",
+    resourcesTerms: "شروط الخدمة",
+    resourcesFaq: "الأسئلة الشائعة",
+    copyright: "© {year} UniTurkey. جميع الحقوق محفوظة.",
+    madeWith: "صُنع بـ ❤️ للطلاب الدوليين",
   }
 };

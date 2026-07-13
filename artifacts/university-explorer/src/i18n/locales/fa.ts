@@ -155,5 +155,57 @@ export default {
     privacyNote: "با ادامه، شما شرایط و سیاست حریم خصوصی ما را می‌پذیرید.",
     logout: "خروج",
     genericError: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+  },
+  news: {
+    sectionBadge: "آخرین به‌روزرسانی‌ها",
+    sectionTitle: "اخبار و دیدگاه‌ها",
+    sectionSubtitle: "از آخرین تحولات آموزش عالی ترکیه، بورسیه‌ها و زندگی دانشجویی مطلع باشید.",
+    readMore: "بیشتر بخوانید",
+    minRead: "دقیقه خواندن",
+    articles: [
+      {
+        category: "بورسیه‌ها",
+        title: "بورسیه ترکیه ۲۰۲۵: تأمین مالی کامل برای دانشجویان بین‌الملل",
+        excerpt: "دولت ترکیه برنامه بورسیه تورکیه بورسلاری را گسترش داده و شهریه، خوابگاه و کمک هزینه ماهانه برای هزاران متقاضی بین‌المللی فراهم کرده است.",
+        date: "۱۵ ژوئن ۲۰۲۵",
+        readTime: "۴",
+        image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "زندگی دانشجویی",
+        title: "تحصیل در استانبول واقعاً چطور است؟",
+        excerpt: "از محله‌های پرجنب‌وجوش دانشجویی تا آزمایشگاه‌های تحقیقاتی در سطح جهانی، استانبول ترکیبی منحصربه‌فرد از فرهنگ، فرصت و تعالی علمی به دانشجویان بین‌الملل ارائه می‌دهد.",
+        date: "۲۸ مه ۲۰۲۵",
+        readTime: "۵",
+        image: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "پذیرش",
+        title: "چگونه به دانشگاه‌های ترکیه درخواست دهید: راهنمای گام‌به‌گام",
+        excerpt: "ناوبری در سیستم درخواست دانشگاه‌های ترکیه می‌تواند پیچیده باشد. این راهنما هر مرحله را از آماده‌سازی مدارک تا درخواست ویزا توضیح می‌دهد.",
+        date: "۱۰ مه ۲۰۲۵",
+        readTime: "۶",
+        image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
+      }
+    ]
+  },
+  footer: {
+    tagline: "راهنمای معتمد شما برای آموزش عالی در ترکیه.",
+    quickLinks: "لینک‌های سریع",
+    contact: "تماس",
+    resources: "منابع",
+    linkHome: "خانه",
+    linkExplore: "کاوش دانشگاه‌ها",
+    linkServices: "خدمات ما",
+    linkLogin: "ورود",
+    contactEmail: "info@uniturkey.com",
+    contactPhone: "+90 212 000 00 00",
+    contactAddress: "استانبول، ترکیه",
+    resourcesAbout: "درباره ما",
+    resourcesPrivacy: "سیاست حریم خصوصی",
+    resourcesTerms: "شرایط خدمات",
+    resourcesFaq: "سوالات متداول",
+    copyright: "© {year} UniTurkey. تمام حقوق محفوظ است.",
+    madeWith: "ساخته شده با ❤️ برای دانشجویان بین‌الملل",
   }
 };

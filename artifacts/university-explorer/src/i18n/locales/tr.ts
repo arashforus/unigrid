@@ -155,5 +155,57 @@ export default {
     privacyNote: "Devam ederek koşullarımızı ve gizlilik politikamızı kabul etmiş olursunuz.",
     logout: "Çıkış Yap",
     genericError: "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+  },
+  news: {
+    sectionBadge: "Son Güncellemeler",
+    sectionTitle: "Haberler & Görüşler",
+    sectionSubtitle: "Türk yükseköğretimi, burslar ve öğrenci yaşamına dair son gelişmelerden haberdar olun.",
+    readMore: "Devamını oku",
+    minRead: "dk okuma",
+    articles: [
+      {
+        category: "Burslar",
+        title: "Türkiye Bursları 2025: Uluslararası Öğrenciler İçin Tam Finansman",
+        excerpt: "Türk hükümeti, Türkiye Bursları programını genişleterek binlerce uluslararası başvuru sahibine öğrenim ücreti, konaklama ve aylık burs imkânı sunuyor.",
+        date: "15 Haziran 2025",
+        readTime: "4",
+        image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "Kampüs Hayatı",
+        title: "İstanbul'da Öğrencilik Gerçekten Nasıl?",
+        excerpt: "Canlı öğrenci mahallelerinden dünya standartlarındaki araştırma laboratuvarlarına kadar İstanbul, uluslararası öğrencilere benzersiz bir kültür, fırsat ve akademik mükemmeliyet deneyimi sunuyor.",
+        date: "28 Mayıs 2025",
+        readTime: "5",
+        image: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "Başvurular",
+        title: "Türk Üniversitelerine Nasıl Başvurulur: Adım Adım Rehber",
+        excerpt: "Türk üniversitesi başvuru sistemi karmaşık olabilir. Bu rehber, belge hazırlığından vize başvurularına kadar her adımı açıklıyor.",
+        date: "10 Mayıs 2025",
+        readTime: "6",
+        image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
+      }
+    ]
+  },
+  footer: {
+    tagline: "Türkiye'deki yükseköğretim için güvenilir rehberiniz.",
+    quickLinks: "Hızlı Bağlantılar",
+    contact: "İletişim",
+    resources: "Kaynaklar",
+    linkHome: "Ana Sayfa",
+    linkExplore: "Üniversiteleri Keşfet",
+    linkServices: "Hizmetlerimiz",
+    linkLogin: "Giriş Yap",
+    contactEmail: "info@uniturkey.com",
+    contactPhone: "+90 212 000 00 00",
+    contactAddress: "İstanbul, Türkiye",
+    resourcesAbout: "Hakkımızda",
+    resourcesPrivacy: "Gizlilik Politikası",
+    resourcesTerms: "Kullanım Koşulları",
+    resourcesFaq: "SSS",
+    copyright: "© {year} UniTurkey. Tüm hakları saklıdır.",
+    madeWith: "Uluslararası öğrenciler için ❤️ ile yapıldı",
   }
 };

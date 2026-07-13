@@ -155,5 +155,57 @@ export default {
     privacyNote: "By continuing, you agree to our terms and privacy policy.",
     logout: "Log Out",
     genericError: "Something went wrong. Please try again.",
+  },
+  news: {
+    sectionBadge: "Latest Updates",
+    sectionTitle: "News & Insights",
+    sectionSubtitle: "Stay informed with the latest updates on Turkish higher education, scholarships, and student life.",
+    readMore: "Read more",
+    minRead: "min read",
+    articles: [
+      {
+        category: "Scholarships",
+        title: "Turkey Scholarships 2025: Full Funding for International Students",
+        excerpt: "The Turkish government has expanded its Türkiye Bursları scholarship program, offering full coverage for tuition, accommodation, and a monthly stipend to thousands of international applicants.",
+        date: "June 15, 2025",
+        readTime: "4",
+        image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "Campus Life",
+        title: "What It's Really Like to Study in Istanbul",
+        excerpt: "From vibrant student neighborhoods to world-class research labs, Istanbul offers international students a unique blend of culture, opportunity, and academic excellence.",
+        date: "May 28, 2025",
+        readTime: "5",
+        image: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&q=80&w=800"
+      },
+      {
+        category: "Admissions",
+        title: "How to Apply to Turkish Universities: A Step-by-Step Guide",
+        excerpt: "Navigating the Turkish university application system can be complex. This guide breaks down every step — from document preparation to visa applications — so you can apply with confidence.",
+        date: "May 10, 2025",
+        readTime: "6",
+        image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
+      }
+    ]
+  },
+  footer: {
+    tagline: "Your trusted guide to higher education in Turkey.",
+    quickLinks: "Quick Links",
+    contact: "Contact",
+    resources: "Resources",
+    linkHome: "Home",
+    linkExplore: "Explore Universities",
+    linkServices: "Our Services",
+    linkLogin: "Sign In",
+    contactEmail: "info@uniturkey.com",
+    contactPhone: "+90 212 000 00 00",
+    contactAddress: "Istanbul, Turkey",
+    resourcesAbout: "About Us",
+    resourcesPrivacy: "Privacy Policy",
+    resourcesTerms: "Terms of Service",
+    resourcesFaq: "FAQ",
+    copyright: "© {year} UniTurkey. All rights reserved.",
+    madeWith: "Made with ❤️ for international students",
   }
 };

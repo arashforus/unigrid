@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { Link } from 'wouter';
-import { MapPin, ArrowRight, GraduationCap, Building2, Search, BookOpen, HeartHandshake, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, GraduationCap, Building2, Search, BookOpen, HeartHandshake, Sparkles, Clock, Newspaper } from 'lucide-react';
 import { 
   useGetStatsOverview, 
   useGetStatsCities, 
@@ -9,6 +9,7 @@ import {
   useListUniversities
 } from '@workspace/api-client-react';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
+import { Footer } from '@/components/Footer';
 import { motion } from 'framer-motion';
 
 export default function Home() {
@@ -206,6 +207,81 @@ export default function Home() {
         </div>
       </section>
 
+      {/* News & Insights */}
+      <section className="py-24 px-6 border-t border-border" aria-labelledby="news-heading">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary mb-4 text-sm font-medium">
+                <Newspaper className="w-3.5 h-3.5" aria-hidden="true" />
+                {t('news.sectionBadge')}
+              </div>
+              <h2 id="news-heading" className="text-3xl md:text-4xl font-bold mb-3">{t('news.sectionTitle')}</h2>
+              <p className="text-muted-foreground max-w-xl">{t('news.sectionSubtitle')}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(t('news.articles', { returnObjects: true }) as Array<{
+              category: string;
+              title: string;
+              excerpt: string;
+              date: string;
+              readTime: string;
+              image: string;
+            }>).map((article, i) => (
+              <motion.article
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 flex flex-col"
+              >
+                <div className="relative h-48 overflow-hidden bg-secondary">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    width={800}
+                    height={400}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <span className="absolute top-3 start-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
+                    {article.category}
+                  </span>
+                </div>
+
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                    <time dateTime={article.date}>{article.date}</time>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" aria-hidden="true" />
+                      {article.readTime} {t('news.minRead')}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-bold leading-snug mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                    {article.title}
+                  </h3>
+
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-5 flex-1">
+                    {article.excerpt}
+                  </p>
+
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-primary mt-auto">
+                    {t('news.readMore')}
+                    <DirectionalIcon icon={ArrowRight} className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pathways Strip */}
       <section className="py-24 bg-gradient-to-b from-primary/10 to-transparent border-t border-primary/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=2000')] opacity-5 mix-blend-overlay bg-cover bg-center"></div>
@@ -220,6 +296,8 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }
