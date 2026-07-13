@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'wouter';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
+import { Footer } from '@/components/Footer';
 import {
   ArrowRight, ArrowLeft, CheckCircle2, Users, Globe2, Trophy, ClipboardList,
   FileText, Send, GraduationCap, MessageSquare, Phone, Mail, User, MapPin,
@@ -352,6 +353,7 @@ export default function Services() {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 }
