@@ -117,15 +117,15 @@ export function Footer() {
             </h3>
             <ul className="space-y-3">
               {[
-                { label: t('footer.resourcesAbout') },
-                { label: t('footer.resourcesPrivacy') },
-                { label: t('footer.resourcesTerms') },
-                { label: t('footer.resourcesFaq') },
+                { href: '/about', label: t('footer.resourcesAbout') },
+                { href: '/privacy', label: t('footer.resourcesPrivacy') },
+                { href: '/terms', label: t('footer.resourcesTerms') },
+                { href: '/faq', label: t('footer.resourcesFaq') },
               ].map((item) => (
-                <li key={item.label}>
-                  <span className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                <li key={item.href}>
+                  <Link href={item.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {item.label}
-                  </span>
+                  </Link>
                 </li>
               ))}
             </ul>

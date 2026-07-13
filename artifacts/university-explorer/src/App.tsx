@@ -12,6 +12,10 @@ import UniversityDetail from '@/pages/University';
 import ProgramDetail from '@/pages/Program';
 import Services from '@/pages/Services';
 import LoginPage from '@/pages/Login';
+import About from '@/pages/About';
+import Privacy from '@/pages/Privacy';
+import Terms from '@/pages/Terms';
+import Faq from '@/pages/Faq';
 import { AdminLayout } from '@/admin/AdminLayout';
 import AdminDashboardPage from '@/admin/pages/Dashboard';
 import AdminUsersPage from '@/admin/pages/Users';
@@ -46,6 +50,10 @@ function Router() {
         <Route path="/program" component={ProgramDetail} />
         <Route path="/services" component={Services} />
         <Route path="/login" component={LoginPage} />
+        <Route path="/about" component={About} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/faq" component={Faq} />
         <Route path="/admin" component={() => <AdminLayout><AdminDashboardPage /></AdminLayout>} />
         <Route path="/admin/users" component={() => <AdminLayout><AdminUsersPage /></AdminLayout>} />
         <Route path="/admin/universities" component={() => <AdminLayout><AdminUniversitiesPage /></AdminLayout>} />
