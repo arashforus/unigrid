@@ -125,8 +125,10 @@ export const adminApi = {
   stats: () => request<AdminStats>('/stats'),
   users: {
     list: () => request<AdminUser[]>('/users'),
-    updateRole: (id: number, role: string) =>
-      request<AdminUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+    create: (data: { name: string; email: string; password: string; role: string }) =>
+      request<AdminUser>('/users', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: { name?: string; email?: string; password?: string; role?: string }) =>
+      request<AdminUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     remove: (id: number) => request<{ ok: true }>(`/users/${id}`, { method: 'DELETE' }),
   },
   universities: {
