@@ -120,6 +120,29 @@ export type AdminStats = {
   signups_by_day: { day: string; count: number }[];
 };
 
+export type CrawlStats = {
+  universities_seen: number;
+  universities_created: number;
+  universities_updated: number;
+  faculties_created: number;
+  programs_seen: number;
+  programs_created: number;
+  programs_updated: number;
+  fees_updated: number;
+  errors: string[];
+};
+
+export type AdminCrawlJob = {
+  id: number;
+  source: string;
+  status: 'pending' | 'running' | 'success' | 'failed';
+  triggered_by: number | null;
+  started_at: string;
+  finished_at: string | null;
+  stats: CrawlStats;
+  error: string | null;
+};
+
 export const adminApi = {
   dashboard: () => request<AdminDashboard>('/dashboard'),
   stats: () => request<AdminStats>('/stats'),
@@ -159,5 +182,12 @@ export const adminApi = {
     get: () => request<AdminSettings>('/settings'),
     update: (data: Partial<AdminSettings>) =>
       request<AdminSettings>('/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  },
+  crawler: {
+    run: () => request<AdminCrawlJob>('/crawler/run', { method: 'POST' }),
+    jobs: {
+      list: () => request<AdminCrawlJob[]>('/crawler/jobs'),
+      get: (id: number) => request<AdminCrawlJob>(`/crawler/jobs/${id}`),
+    },
   },
 };

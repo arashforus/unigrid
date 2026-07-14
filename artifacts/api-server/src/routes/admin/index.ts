@@ -7,6 +7,7 @@ import programsRouter from "./programs";
 import tasksRouter from "./tasks";
 import settingsRouter from "./settings";
 import statsRouter from "./stats";
+import crawlerRouter from "./crawler";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(programsRouter);
 router.use(tasksRouter);
 router.use(settingsRouter);
 router.use(statsRouter);
+router.use(crawlerRouter);
 
 export default router;

@@ -1,4 +1,4 @@
-import { pgTable, serial, text } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -21,6 +21,7 @@ export const universitiesTable = pgTable("universities", {
   description_tr: text("description_tr"),
   description_fa: text("description_fa"),
   description_ar: text("description_ar"),
+  yok_universite_id: integer("yok_universite_id"),
 });
 
 export const insertUniversitySchema = createInsertSchema(universitiesTable).omit({ id: true });

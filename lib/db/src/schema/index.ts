@@ -5,3 +5,4 @@ export * from "./tuition_fees";
 export * from "./inquiries";
 export * from "./users";
 export * from "./settings";
+export * from "./crawl_jobs";
