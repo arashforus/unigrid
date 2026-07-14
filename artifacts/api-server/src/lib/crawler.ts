@@ -8,7 +8,14 @@ import {
   type CrawlStats,
 } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { listUniversities, listProgramsForUniversity, type YokProgram } from "./yokatlas";
+import {
+  listUniversities,
+  listUndergraduateProgramsForUniversity,
+  listGraduateProgramsForUniversity,
+  WafBlockError,
+  type YokProgram,
+  type YokGraduateProgram,
+} from "./yokatlas";
 import { feeAdapters } from "./feeAdapters";
 import { logger } from "./logger";
 
@@ -29,8 +36,21 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function mapDegreeType(birimTuruAdi: YokProgram["birimTuruAdi"]): "associate" | "bachelor" {
-  return birimTuruAdi === "ONLISANS" ? "associate" : "bachelor";
+type DegreeType = "associate" | "bachelor" | "master" | "doctorate";
+
+/** Maps the undergraduate birimTuruAdi field to our degree_type enum. */
+function mapUndergraduateDegree(birimTuruAdi: string): DegreeType {
+  const v = birimTuruAdi.toUpperCase().trim();
+  if (v === "ONLISANS" || v === "ÖNLİSANS") return "associate";
+  return "bachelor"; // LISANS and any unknown undergraduate type
+}
+
+/** Maps the graduate programTuruAdi field to our degree_type enum. */
+function mapGraduateDegree(programTuruAdi: string): DegreeType {
+  const v = programTuruAdi.toUpperCase().trim();
+  if (v.includes("DOKTORA")) return "doctorate";
+  // "Tezli Yüksek Lisans", "Tezsiz Yüksek Lisans", "YUKSEK LISANS", etc.
+  return "master";
 }
 
 function mapLanguage(ogrenimDiliAdi: string | null | undefined): string {
@@ -48,10 +68,16 @@ async function updateJobStats(jobId: number, stats: CrawlStats) {
 // --- main entry point ---------------------------------------------------
 
 /**
- * Runs a full crawl and writes progress into crawl_jobs as it goes so the
- * admin panel can poll it. Designed to be started fire-and-forget from the
- * route handler (see routes/admin/crawler.ts) — it never throws; failures
- * are recorded on the job row instead.
+ * Runs a full crawl (undergraduate + graduate) and writes progress into
+ * crawl_jobs as it goes so the admin panel can poll it.
+ *
+ * Designed to be started fire-and-forget from the route handler — it never
+ * throws; failures are recorded on the job row instead.
+ *
+ * Graduate programs: fetched from the lisansustu-kilavuz endpoint. If that
+ * endpoint is WAF-blocked (common on some hosting IPs), the graduate phase
+ * is skipped with a warning logged on the job; undergraduate programs are
+ * still imported normally.
  */
 export async function runCrawlJob(jobId: number): Promise<void> {
   const stats: CrawlStats = {
@@ -68,25 +94,70 @@ export async function runCrawlJob(jobId: number): Promise<void> {
 
   await db.update(crawlJobsTable).set({ status: "running" }).where(eq(crawlJobsTable.id, jobId));
 
+  // Track whether the graduate endpoint is reachable.
+  // After the first WAF block we skip it for subsequent universities to
+  // avoid flooding the logs.
+  let graduateEndpointBlocked = false;
+
   try {
     const yokUniversities = await listUniversities();
 
     for (const yokUni of yokUniversities) {
       stats.universities_seen += 1;
       try {
-        const programs = await listProgramsForUniversity(yokUni.universiteId);
-        if (programs.length === 0) {
+        // ---- 1. Undergraduate programs (LISANS + ÖNLISANS) ---------------
+        const undergradPrograms = await listUndergraduateProgramsForUniversity(yokUni.universiteId);
+
+        // ---- 2. Graduate programs (YÜKSEK LİSANS + DOKTORA) --------------
+        let graduatePrograms: YokGraduateProgram[] = [];
+        if (!graduateEndpointBlocked) {
+          try {
+            graduatePrograms = await listGraduateProgramsForUniversity(yokUni.universiteId);
+          } catch (err) {
+            if (err instanceof WafBlockError) {
+              graduateEndpointBlocked = true;
+              stats.errors.push(
+                "Graduate endpoint (lisansustu-kilavuz) is WAF-blocked from this server IP. " +
+                "Only undergraduate (Bachelor + Associate) programs will be imported. " +
+                "Run the crawler from the deployed production environment to import Master + Doctorate programs.",
+              );
+            } else {
+              stats.errors.push(`${yokUni.universiteAdi} graduate: ${(err as Error).message}`);
+            }
+          }
+        }
+
+        const totalPrograms = undergradPrograms.length + graduatePrograms.length;
+        if (totalPrograms === 0) {
           stats.errors.push(`${yokUni.universiteAdi}: no programs returned, skipped`);
           await updateJobStats(jobId, stats);
           continue;
         }
 
-        const first = programs[0]!;
-        const universityId = await upsertUniversity(yokUni.universiteId, yokUni.universiteAdi, first, stats);
+        // Determine city / type from whichever list has data
+        const sampleUG = undergradPrograms[0];
+        const sampleGR = graduatePrograms[0];
+        const city =
+          sampleUG?.uniIlAdi?.trim() ||
+          sampleGR?.uniIlAdi?.trim() ||
+          "";
+        const uniTuru =
+          sampleUG?.universiteTuru ||
+          sampleGR?.universiteTuru ||
+          "DEVLET";
+
+        const universityId = await upsertUniversity(
+          yokUni.universiteId,
+          yokUni.universiteAdi,
+          city,
+          uniTuru,
+          stats,
+        );
 
         const facultyCache = new Map<string, number>();
 
-        for (const program of programs) {
+        // ---- 3. Upsert undergraduate programs ----------------------------
+        for (const program of undergradPrograms) {
           stats.programs_seen += 1;
           try {
             const facultyName = program.fymkAdi?.trim() || yokUni.universiteAdi;
@@ -96,13 +167,71 @@ export async function runCrawlJob(jobId: number): Promise<void> {
               facultyId = await upsertFaculty(universityId, facultyName, stats);
               facultyCache.set(cacheKey, facultyId);
             }
-            await upsertProgram(facultyId, program, stats);
+            await upsertProgram(
+              facultyId,
+              {
+                code: String(program.kilavuzKodu),
+                nametr: program.birimAdi,
+                degreeType: mapUndergraduateDegree(program.birimTuruAdi),
+                language: mapLanguage(program.ogrenimDiliAdi),
+                durationYears:
+                  program.ogrenimSuresi ??
+                  (program.birimTuruAdi === "ONLISANS" ? 2 : 4),
+              },
+              stats,
+            );
           } catch (err) {
-            stats.errors.push(`Program ${program.kilavuzKodu} (${program.birimAdi}): ${(err as Error).message}`);
+            stats.errors.push(
+              `UG Program ${program.kilavuzKodu} (${program.birimAdi}): ${(err as Error).message}`,
+            );
           }
         }
 
-        // Fee enrichment, if we have an adapter for this university.
+        // ---- 4. Upsert graduate programs ---------------------------------
+        for (const program of graduatePrograms) {
+          stats.programs_seen += 1;
+          try {
+            // Use institute as the faculty grouping
+            const facultyName =
+              program.enstituAdi?.trim() ||
+              program.anabilimDaliAdi?.trim() ||
+              yokUni.universiteAdi;
+            const cacheKey = `${universityId}|${facultyName}`;
+            let facultyId = facultyCache.get(cacheKey);
+            if (!facultyId) {
+              facultyId = await upsertFaculty(universityId, facultyName, stats);
+              facultyCache.set(cacheKey, facultyId);
+            }
+
+            const degreeType = mapGraduateDegree(program.programTuruAdi);
+            const durationYears =
+              program.ogrenimSuresi ?? (degreeType === "doctorate" ? 4 : 2);
+
+            // Graduate programs may not have a stable kilavuzKodu — fall back
+            // to a composite key derived from universiteId + programAdi + programTuruAdi
+            const code = program.kilavuzKodu
+              ? String(program.kilavuzKodu)
+              : `gr-${yokUni.universiteId}-${slugify(program.programAdi)}-${slugify(program.programTuruAdi)}`;
+
+            await upsertProgram(
+              facultyId,
+              {
+                code,
+                nametr: program.programAdi,
+                degreeType,
+                language: mapLanguage(program.ogrenimDiliAdi),
+                durationYears,
+              },
+              stats,
+            );
+          } catch (err) {
+            stats.errors.push(
+              `GR Program (${program.programAdi}): ${(err as Error).message}`,
+            );
+          }
+        }
+
+        // ---- 5. Fee enrichment (university-level adapter) ----------------
         const adapter = feeAdapters.find((a) =>
           yokUni.universiteAdi.toLowerCase().includes(a.matchName.toLowerCase()),
         );
@@ -144,7 +273,8 @@ export async function runCrawlJob(jobId: number): Promise<void> {
 async function upsertUniversity(
   yokId: number,
   yokName: string,
-  sample: YokProgram,
+  city: string,
+  uniTuru: string,
   stats: CrawlStats,
 ): Promise<number> {
   const [byYokId] = await db
@@ -169,9 +299,7 @@ async function upsertUniversity(
     return bySlug.id;
   }
 
-  const city = sample.uniIlAdi?.trim() || "";
-  const type = sample.universiteTuru === "DEVLET" ? "state" : "foundation";
-
+  const type = uniTuru === "DEVLET" ? "state" : "foundation";
   const [created] = await db
     .insert(universitiesTable)
     .values({
@@ -216,19 +344,30 @@ async function upsertFaculty(universityId: number, name: string, stats: CrawlSta
   return created!.id;
 }
 
-async function upsertProgram(facultyId: number, program: YokProgram, stats: CrawlStats): Promise<number> {
-  const code = String(program.kilavuzKodu);
+type ProgramData = {
+  code: string;
+  nametr: string;
+  degreeType: DegreeType;
+  language: string;
+  durationYears: number;
+};
+
+async function upsertProgram(
+  facultyId: number,
+  data: ProgramData,
+  stats: CrawlStats,
+): Promise<number> {
   const [existing] = await db
     .select({ id: programsTable.id })
     .from(programsTable)
-    .where(eq(programsTable.yok_atlas_code, code))
+    .where(eq(programsTable.yok_atlas_code, data.code))
     .limit(1);
 
   const structuralFields = {
     faculty_id: facultyId,
-    degree_type: mapDegreeType(program.birimTuruAdi),
-    language: mapLanguage(program.ogrenimDiliAdi),
-    duration_years: program.ogrenimSuresi ?? (program.birimTuruAdi === "ONLISANS" ? 2 : 4),
+    degree_type: data.degreeType,
+    language: data.language,
+    duration_years: data.durationYears,
     is_active: true,
   };
 
@@ -242,11 +381,11 @@ async function upsertProgram(facultyId: number, program: YokProgram, stats: Craw
     .insert(programsTable)
     .values({
       ...structuralFields,
-      name_en: program.birimAdi,
-      name_tr: program.birimAdi,
-      name_fa: program.birimAdi,
-      name_ar: program.birimAdi,
-      yok_atlas_code: code,
+      name_en: data.nametr,
+      name_tr: data.nametr,
+      name_fa: data.nametr,
+      name_ar: data.nametr,
+      yok_atlas_code: data.code,
     })
     .returning({ id: programsTable.id });
 

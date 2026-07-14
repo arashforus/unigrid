@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi, type AdminCrawlJob } from '@/admin/api';
-import { Loader2, PlayCircle, CheckCircle2, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, PlayCircle, CheckCircle2, XCircle, Clock, AlertTriangle, GraduationCap, Info, Wifi, WifiOff } from 'lucide-react';
+
+const WAF_MARKER = "Graduate endpoint (lisansustu-kilavuz) is WAF-blocked";
 
 const STATUS_META: Record<AdminCrawlJob['status'], { label: string; className: string; icon: typeof Clock }> = {
   pending: { label: 'Pending', className: 'border-border bg-secondary/30 text-muted-foreground', icon: Clock },
@@ -12,7 +14,7 @@ const STATUS_META: Record<AdminCrawlJob['status'], { label: string; className: s
 function StatCell({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl bg-secondary/40 px-3 py-2">
-      <p className="text-lg font-bold leading-none">{value}</p>
+      <p className="text-lg font-bold leading-none">{value.toLocaleString()}</p>
       <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </div>
   );
@@ -22,6 +24,10 @@ function JobCard({ job }: { job: AdminCrawlJob }) {
   const meta = STATUS_META[job.status];
   const Icon = meta.icon;
   const isRunning = job.status === 'running' || job.status === 'pending';
+
+  // Separate WAF-block notice from regular per-item errors
+  const wafError = job.stats.errors.find((e) => e.startsWith(WAF_MARKER));
+  const itemErrors = job.stats.errors.filter((e) => !e.startsWith(WAF_MARKER));
 
   return (
     <div className={`rounded-2xl border p-5 ${meta.className.split(' ').filter((c) => c.startsWith('border') || c.startsWith('bg')).join(' ')}`}>
@@ -39,7 +45,7 @@ function JobCard({ job }: { job: AdminCrawlJob }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         <StatCell label="Universities" value={job.stats.universities_created + job.stats.universities_updated} />
         <StatCell label="Faculties" value={job.stats.faculties_created} />
         <StatCell label="Programs" value={job.stats.programs_created + job.stats.programs_updated} />
@@ -47,19 +53,38 @@ function JobCard({ job }: { job: AdminCrawlJob }) {
       </div>
 
       {job.error && (
-        <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-3 mb-2">
+        <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-3 mb-3">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{job.error}</span>
         </div>
       )}
 
-      {job.stats.errors.length > 0 && (
+      {/* WAF block notice — shown as a prominent warning, not buried in errors */}
+      {wafError && (
+        <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-3">
+          <WifiOff className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+          <div className="text-sm">
+            <p className="font-semibold text-amber-500 mb-1">Graduate endpoint blocked by YÖK Atlas firewall</p>
+            <p className="text-muted-foreground leading-relaxed">
+              The YÖK Atlas firewall blocked requests to the Master's &amp; Doctorate endpoint from this
+              server's IP address. <strong>Bachelor &amp; Associate programs were still imported normally.</strong>
+            </p>
+            <p className="text-muted-foreground mt-2 leading-relaxed">
+              To also import <strong>Master's &amp; Doctorate</strong> programs, deploy the app to production
+              (Deploy → Publish) and run the crawler from there — production servers use a different IP
+              that is not rate-limited.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {itemErrors.length > 0 && (
         <details className="text-sm text-muted-foreground">
           <summary className="cursor-pointer font-medium">
-            {job.stats.errors.length} item{job.stats.errors.length === 1 ? '' : 's'} skipped — details
+            {itemErrors.length} item{itemErrors.length === 1 ? '' : 's'} skipped — details
           </summary>
           <ul className="mt-2 space-y-1 max-h-48 overflow-y-auto pr-1">
-            {job.stats.errors.map((e, i) => (
+            {itemErrors.map((e, i) => (
               <li key={i} className="text-xs bg-background/50 rounded-lg px-2 py-1.5">{e}</li>
             ))}
           </ul>
@@ -91,11 +116,12 @@ export default function AdminCrawlerPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Crawler</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Pulls universities &amp; programs from YÖK Atlas and tuition fees from configured university adapters.
+            Pulls all degree types from YÖK Atlas and tuition fees from configured university adapters.
           </p>
         </div>
         <button
@@ -112,6 +138,28 @@ export default function AdminCrawlerPage() {
         </button>
       </div>
 
+      {/* Coverage info */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+          <Wifi className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold">Undergraduate · tercih-kilavuz API</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="font-medium text-foreground">Bachelor</span> + <span className="font-medium text-foreground">Associate</span> degrees — sourced from the ÖSYM placement guide. Always accessible.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <GraduationCap className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Graduate · lisansustu-kilavuz API</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="font-medium text-foreground">Master's</span> + <span className="font-medium text-foreground">Doctorate</span> degrees — may be WAF-blocked on dev. Works from production deployment.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {runMutation.isError && (
         <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-3">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -119,6 +167,7 @@ export default function AdminCrawlerPage() {
         </div>
       )}
 
+      {/* Job list */}
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
           <Loader2 className="w-6 h-6 text-primary animate-spin" />
@@ -128,8 +177,12 @@ export default function AdminCrawlerPage() {
           {jobs && jobs.length > 0 ? (
             jobs.map((job) => <JobCard key={job.id} job={job} />)
           ) : (
-            <div className="text-center text-muted-foreground py-16 border border-dashed border-border rounded-2xl">
-              No crawl jobs yet. Click &quot;Run Crawler&quot; to fetch data for the first time.
+            <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-16 border border-dashed border-border rounded-2xl gap-3">
+              <GraduationCap className="w-8 h-8 opacity-40" />
+              <div>
+                <p className="font-medium">No crawl jobs yet</p>
+                <p className="text-sm mt-1">Click "Run Crawler" to import universities and programs from YÖK Atlas.</p>
+              </div>
             </div>
           )}
         </div>
