@@ -6,7 +6,7 @@ import {
   universitiesTable,
   tuitionFeesTable,
 } from "@workspace/db";
-import { eq, ilike, or, and, gte, lte, inArray } from "drizzle-orm";
+import { eq, ilike, or, and, inArray, sql } from "drizzle-orm";
 import {
   ListProgramsQueryParams,
   GetProgramQueryParams,
@@ -54,7 +54,7 @@ function localizeProgram(
   };
 }
 
-// GET /programs
+// GET /programs — paginated
 router.get("/programs", async (req, res) => {
   const parsed = ListProgramsQueryParams.safeParse(req.query);
   if (!parsed.success) {
@@ -72,8 +72,13 @@ router.get("/programs", async (req, res) => {
     search,
     lang = "en",
     is_active,
+    page,
+    limit,
   } = parsed.data;
   const l = lang as Lang;
+  const pageNum = page ?? 1;
+  const pageSize = limit ?? 24;
+  const offset = (pageNum - 1) * pageSize;
 
   try {
     const programConditions = [];
@@ -93,34 +98,26 @@ router.get("/programs", async (req, res) => {
       );
     }
 
-    let programs =
-      programConditions.length > 0
-        ? await db
-            .select()
-            .from(programsTable)
-            .where(
-              programConditions.length === 1
-                ? programConditions[0]
-                : and(...programConditions),
-            )
-        : await db.select().from(programsTable);
+    const whereClause =
+      programConditions.length === 0
+        ? undefined
+        : programConditions.length === 1
+          ? programConditions[0]
+          : and(...programConditions);
 
-    // Filter by university_id or city by joining via faculties
+    // Resolve faculty IDs when filtering by university_id or city
+    let allowedFacultyIds: number[] | null = null;
     if (university_id || city) {
       const facultyConditions = [];
       if (university_id)
         facultyConditions.push(eq(facultiesTable.university_id, university_id));
 
-      const faculties =
+      let faculties =
         facultyConditions.length > 0
           ? await db
               .select()
               .from(facultiesTable)
-              .where(
-                facultyConditions.length === 1
-                  ? facultyConditions[0]
-                  : and(...facultyConditions),
-              )
+              .where(and(...facultyConditions))
           : await db.select().from(facultiesTable);
 
       if (city) {
@@ -135,22 +132,57 @@ router.get("/programs", async (req, res) => {
               ),
             )
         ).map((u) => u.id);
-        const filteredFacultyIds = faculties
-          .filter((f) => uniIds.includes(f.university_id))
-          .map((f) => f.id);
-        programs = programs.filter((p) =>
-          filteredFacultyIds.includes(p.faculty_id),
-        );
-      } else {
-        const filteredFacultyIds = faculties.map((f) => f.id);
-        programs = programs.filter((p) =>
-          filteredFacultyIds.includes(p.faculty_id),
-        );
+        faculties = faculties.filter((f) => uniIds.includes(f.university_id));
       }
+      allowedFacultyIds = faculties.map((f) => f.id);
+    }
+
+    // Build the final WHERE by combining conditions + faculty filter
+    const buildFinalWhere = () => {
+      const parts = whereClause ? [whereClause] : [];
+      if (allowedFacultyIds !== null) {
+        if (allowedFacultyIds.length === 0) return sql`false`;
+        parts.push(inArray(programsTable.faculty_id, allowedFacultyIds));
+      }
+      if (parts.length === 0) return undefined;
+      if (parts.length === 1) return parts[0];
+      return and(...parts);
+    };
+
+    const finalWhere = buildFinalWhere();
+
+    // Count total matching programs (for pagination metadata)
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(programsTable)
+      .where(finalWhere);
+
+    const total = count ?? 0;
+
+    if (total === 0) {
+      res.json({ data: [], total: 0, page: pageNum, totalPages: 0 });
+      return;
+    }
+
+    // Handle fee filtering: we need all matching programs to filter by fee,
+    // but that's expensive with 21k rows. Apply fee filter post-page only when
+    // min_fee / max_fee are set (small result set expected).
+    let programs: typeof programsTable.$inferSelect[];
+
+    if (min_fee !== undefined || max_fee !== undefined) {
+      // Fetch all matching (no pagination yet), then filter by fee
+      programs = finalWhere
+        ? await db.select().from(programsTable).where(finalWhere)
+        : await db.select().from(programsTable);
+    } else {
+      // Fast path: paginate in SQL
+      const q = db.select().from(programsTable);
+      const filtered = finalWhere ? q.where(finalWhere) : q;
+      programs = await (filtered as any).limit(pageSize).offset(offset);
     }
 
     if (programs.length === 0) {
-      res.json([]);
+      res.json({ data: [], total, page: pageNum, totalPages: Math.ceil(total / pageSize) });
       return;
     }
 
@@ -182,7 +214,7 @@ router.get("/programs", async (req, res) => {
       tuitionMap.get(fee.program_id)!.push(fee);
     }
 
-    // Filter by tuition if needed
+    // Apply fee filter if needed
     let filteredPrograms = programs;
     if (min_fee !== undefined || max_fee !== undefined) {
       filteredPrograms = programs.filter((p) => {
@@ -195,40 +227,55 @@ router.get("/programs", async (req, res) => {
         if (max_fee !== undefined && fee > max_fee) return false;
         return true;
       });
+      // Apply pagination after fee filter
+      const feeTotal = filteredPrograms.length;
+      filteredPrograms = filteredPrograms.slice(offset, offset + pageSize);
+      res.json({
+        data: filteredPrograms.map((p) => localizeProgram(p, l, buildExtras(p, facultyMap, universityMap, tuitionMap, l))),
+        total: feeTotal,
+        page: pageNum,
+        totalPages: Math.ceil(feeTotal / pageSize),
+      });
+      return;
     }
 
-    res.json(
-      filteredPrograms.map((p) => {
-        const faculty = facultyMap.get(p.faculty_id);
-        const university = faculty
-          ? universityMap.get(faculty.university_id)
-          : undefined;
-        return localizeProgram(p, l, {
-          university_name: university
-            ? (university[`name_${l}` as const] ?? university.name_en)
-            : null,
-          university_slug: university?.slug ?? null,
-          university_logo: university?.logo_url ?? null,
-          faculty_name: faculty ? (faculty[`name_${l}` as const] ?? faculty.name_en) : null,
-          city: university
-            ? (university[`city_${l}` as const] ?? university.city_en)
-            : null,
-          tuition_fees: (tuitionMap.get(p.id) ?? []).map((f) => ({
-            id: f.id,
-            program_id: f.program_id,
-            academic_year: f.academic_year,
-            domestic_fee: f.domestic_fee,
-            international_fee: f.international_fee,
-            currency: f.currency,
-          })),
-        });
-      }),
-    );
+    res.json({
+      data: filteredPrograms.map((p) => localizeProgram(p, l, buildExtras(p, facultyMap, universityMap, tuitionMap, l))),
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / pageSize),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to list programs");
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+function buildExtras(
+  p: typeof programsTable.$inferSelect,
+  facultyMap: Map<number, typeof facultiesTable.$inferSelect>,
+  universityMap: Map<number, typeof universitiesTable.$inferSelect>,
+  tuitionMap: Map<number, typeof tuitionFeesTable.$inferSelect[]>,
+  l: Lang,
+) {
+  const faculty = facultyMap.get(p.faculty_id);
+  const university = faculty ? universityMap.get(faculty.university_id) : undefined;
+  return {
+    university_name: university ? (university[`name_${l}` as const] ?? university.name_en) : null,
+    university_slug: university?.slug ?? null,
+    university_logo: university?.logo_url ?? null,
+    faculty_name: faculty ? (faculty[`name_${l}` as const] ?? faculty.name_en) : null,
+    city: university ? (university[`city_${l}` as const] ?? university.city_en) : null,
+    tuition_fees: (tuitionMap.get(p.id) ?? []).map((f) => ({
+      id: f.id,
+      program_id: f.program_id,
+      academic_year: f.academic_year,
+      domestic_fee: f.domestic_fee,
+      international_fee: f.international_fee,
+      currency: f.currency,
+    })),
+  };
+}
 
 // GET /programs/detail
 router.get("/programs/detail", async (req, res) => {
@@ -300,7 +347,7 @@ router.get("/programs/detail", async (req, res) => {
       }),
     );
   } catch (err) {
-    req.log.error({ err }, "Failed to get program" );
+    req.log.error({ err }, "Failed to get program");
     res.status(500).json({ error: "Internal server error" });
   }
 });

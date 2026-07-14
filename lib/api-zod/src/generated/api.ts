@@ -116,7 +116,9 @@ export const ListProgramsQueryParams = zod.object({
   "max_fee": zod.coerce.number().optional(),
   "search": zod.coerce.string().optional(),
   "lang": zod.enum(['en', 'tr', 'fa', 'ar']).default(listProgramsQueryLangDefault),
-  "is_active": zod.coerce.boolean().optional()
+  "is_active": zod.coerce.boolean().optional(),
+  "page": zod.coerce.number().int().min(1).default(1),
+  "limit": zod.coerce.number().int().min(1).max(100).default(24)
 })
 
 export const ListProgramsResponseItem = zod.object({
