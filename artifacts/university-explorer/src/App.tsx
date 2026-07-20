@@ -22,6 +22,7 @@ import AdminUsersPage from '@/admin/pages/Users';
 import AdminUniversitiesPage from '@/admin/pages/Universities';
 import AdminCoursesPage from '@/admin/pages/Courses';
 import AdminCrawlerPage from '@/admin/pages/Crawler';
+import AdminFeeCrawlerPage from '@/admin/pages/FeeCrawler';
 import AdminStatisticsPage from '@/admin/pages/Statistics';
 import AdminTasksPage from '@/admin/pages/Tasks';
 import AdminSettingsPage from '@/admin/pages/Settings';
@@ -60,6 +61,7 @@ function Router() {
         <Route path="/admin/universities" component={() => <AdminLayout><AdminUniversitiesPage /></AdminLayout>} />
         <Route path="/admin/courses" component={() => <AdminLayout><AdminCoursesPage /></AdminLayout>} />
         <Route path="/admin/crawler" component={() => <AdminLayout><AdminCrawlerPage /></AdminLayout>} />
+        <Route path="/admin/fee-crawler" component={() => <AdminLayout><AdminFeeCrawlerPage /></AdminLayout>} />
         <Route path="/admin/statistics" component={() => <AdminLayout><AdminStatisticsPage /></AdminLayout>} />
         <Route path="/admin/tasks" component={() => <AdminLayout><AdminTasksPage /></AdminLayout>} />
         <Route path="/admin/settings" component={() => <AdminLayout><AdminSettingsPage /></AdminLayout>} />

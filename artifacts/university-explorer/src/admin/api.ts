@@ -143,6 +143,43 @@ export type AdminCrawlJob = {
   error: string | null;
 };
 
+export type FeeCrawlUniversityResult = {
+  university_id: number;
+  university_name: string;
+  website_url: string | null;
+  status: 'pending' | 'no_url' | 'fetching' | 'extracting' | 'done' | 'failed';
+  pages_fetched: number;
+  fees_saved: number;
+  error?: string;
+};
+
+export type FeeCrawlStats = {
+  universities_total: number;
+  universities_done: number;
+  universities_with_fees: number;
+  universities_no_url: number;
+  universities_failed: number;
+  fees_saved: number;
+  results: FeeCrawlUniversityResult[];
+};
+
+export type AdminFeeCrawlJob = {
+  id: number;
+  status: 'pending' | 'running' | 'success' | 'failed';
+  triggered_by: number | null;
+  started_at: string;
+  finished_at: string | null;
+  stats: FeeCrawlStats;
+  error: string | null;
+};
+
+export type FeeCrawlerUniversity = {
+  id: number;
+  name_en: string;
+  slug: string;
+  website_url: string | null;
+};
+
 export const adminApi = {
   dashboard: () => request<AdminDashboard>('/dashboard'),
   stats: () => request<AdminStats>('/stats'),
@@ -189,5 +226,17 @@ export const adminApi = {
       list: () => request<AdminCrawlJob[]>('/crawler/jobs'),
       get: (id: number) => request<AdminCrawlJob>(`/crawler/jobs/${id}`),
     },
+  },
+  feeCrawler: {
+    run: (universityIds?: number[]) =>
+      request<AdminFeeCrawlJob>('/fee-crawler/run', {
+        method: 'POST',
+        body: JSON.stringify({ university_ids: universityIds ?? [] }),
+      }),
+    jobs: {
+      list: () => request<AdminFeeCrawlJob[]>('/fee-crawler/jobs'),
+      get: (id: number) => request<AdminFeeCrawlJob>(`/fee-crawler/jobs/${id}`),
+    },
+    universities: () => request<FeeCrawlerUniversity[]>('/fee-crawler/universities'),
   },
 };
