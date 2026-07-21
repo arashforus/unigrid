@@ -7,7 +7,11 @@
 import { execSync } from "child_process";
 import { resolve } from "path";
 import pg from "pg";
+import bcrypt from "bcryptjs";
 import { seed } from "./seed";
+import { db } from "./index";
+import { usersTable } from "./schema";
+import { eq } from "drizzle-orm";
 
 const { Pool } = pg;
 
@@ -57,7 +61,36 @@ export async function ensureDatabase(): Promise<void> {
       console.log("[db] No data found — seeding…");
       await seed();
     }
+
+    await ensureAdminUser();
   } finally {
     await pool.end();
   }
+}
+
+async function ensureAdminUser(): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@uniturkey.com";
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin1234";
+  const adminName = process.env.ADMIN_NAME ?? "Admin";
+
+  const existing = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.email, adminEmail))
+    .limit(1);
+
+  if (existing.length > 0) return; // already exists
+
+  const password_hash = await bcrypt.hash(adminPassword, 12);
+  await db.insert(usersTable).values({
+    name: adminName,
+    email: adminEmail,
+    password_hash,
+    role: "admin",
+  });
+
+  console.log("[db] Default admin user created.");
+  console.log(`[db]   Email:    ${adminEmail}`);
+  console.log(`[db]   Password: ${adminPassword}`);
+  console.log("[db] Change these credentials after first login.");
 }
