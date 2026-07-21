@@ -3,10 +3,17 @@
  *
  * For each university in the DB it:
  *  1. Resolves the official website URL (uses stored value or guesses from name/slug)
- *  2. Fetches the homepage + known fee-page URL patterns and discovers more via GPT
+ *  2. Probes known fee-page URL patterns; falls back to LLM link-selection only when needed
  *  3. Parses HTML preserving table structure so the LLM can read fee tables
  *  4. Sends page content to GPT to extract structured per-program fee data
- *  5. Uses GPT to match extracted program names to DB programs and upserts tuition_fees rows
+ *  5. Uses a SINGLE batched LLM call to match ALL extracted fees to DB programs, then upserts
+ *
+ * Token-efficiency principles:
+ *  - Batch all program-matching into one LLM call per university (not one per fee row)
+ *  - Skip LLM link discovery when direct URL probing finds ≥2 fee pages
+ *  - Hard-trim page content to tables + nearby text only (≤10k chars)
+ *  - Skip extraction LLM call when page text has no fee keywords
+ *  - Use response_format: json_object for reliable JSON without retries
  */
 
 import OpenAI from "openai";
@@ -59,12 +66,19 @@ type ExtractedFeePage = {
   fees: ExtractedFee[];
 };
 
+type DBProgram = {
+  id: number;
+  name_tr: string;
+  name_en: string;
+  degree_type: string;
+};
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const FETCH_TIMEOUT_MS = 15_000;
-const MAX_PAGE_CHARS = 28_000;
+const MAX_PAGE_CHARS = 10_000; // Tighter limit — tables only
 const REQUEST_DELAY_MS = 600;
 const MODEL = "gpt-4o-mini";
 
@@ -85,8 +99,15 @@ const FEE_PATH_PATTERNS = [
   "/international/fees",
   "/uluslararasi/ucretler",
   "/yabanci-uyruklu/ucretler",
-  "/ogrenci/harç",
+  "/ogrenci/harc",
   "/ogrenci/mali-isler",
+];
+
+// Keywords that indicate fee content is present — used to skip pages cheaply
+const FEE_CONTENT_KEYWORDS = [
+  "ücret", "ucret", "harç", "harc", "tuition", "fee",
+  "öğrenim", "ogrenim", "tl", "try", "usd", "eur",
+  "burs", "indirim", "fiyat",
 ];
 
 // ---------------------------------------------------------------------------
@@ -147,7 +168,6 @@ async function safeHead(url: string): Promise<boolean> {
  * This preserves the row/column relationships that are critical for reading fee data.
  */
 function htmlTableToMarkdown(tableHtml: string): string {
-  // Extract all rows
   const rows: string[][] = [];
   const rowPattern = /<tr[\s\S]*?<\/tr>/gi;
   let rowMatch: RegExpExecArray | null;
@@ -174,51 +194,59 @@ function htmlTableToMarkdown(tableHtml: string): string {
 }
 
 /**
- * Strip HTML but preserve table contents as markdown tables.
- * Fee data almost always lives in HTML tables; preserving structure dramatically
- * improves LLM extraction accuracy.
+ * Extract tables + a small window of surrounding text, discarding nav/footer noise.
+ * Fee data almost always lives in HTML tables — we prioritise those and only keep
+ * text that's near a table or contains fee keywords.
  */
 function extractTextWithTables(html: string, maxChars = MAX_PAGE_CHARS): string {
-  // Remove scripts and styles first
   let cleaned = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ");
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    // Strip nav / header / footer / aside blocks — mostly noise
+    .replace(/<(nav|header|footer|aside)[^>]*>[\s\S]*?<\/\1>/gi, " ");
 
   const parts: string[] = [];
-
-  // Find tables and convert them; keep remaining text stripped
   const tablePattern = /<table[\s\S]*?<\/table>/gi;
   let lastIndex = 0;
   let tableMatch: RegExpExecArray | null;
 
   while ((tableMatch = tablePattern.exec(cleaned)) !== null) {
-    // Add text before the table
+    // Keep a small snippet of text before the table (headings / labels)
     const before = cleaned
-      .slice(lastIndex, tableMatch.index)
+      .slice(Math.max(lastIndex, tableMatch.index - 300), tableMatch.index)
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;/gi, " ")
       .replace(/\s+/g, " ")
       .trim();
     if (before) parts.push(before);
 
-    // Convert the table to markdown
     const md = htmlTableToMarkdown(tableMatch[0]);
     if (md) parts.push("\n" + md + "\n");
 
     lastIndex = tableMatch.index + tableMatch[0].length;
   }
 
-  // Add any remaining text after the last table
-  const after = cleaned
-    .slice(lastIndex)
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (after) parts.push(after);
+  // If there were no tables, fall back to plain text extraction
+  if (parts.length === 0) {
+    const plain = cleaned
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return plain.slice(0, maxChars);
+  }
 
   return parts.join("\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, maxChars);
+}
+
+// ---------------------------------------------------------------------------
+// Content relevance check (avoid LLM call for unrelated pages)
+// ---------------------------------------------------------------------------
+
+function hasFeeContent(text: string): boolean {
+  const lower = text.toLowerCase();
+  return FEE_CONTENT_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
 // ---------------------------------------------------------------------------
@@ -273,8 +301,8 @@ async function discoverWebsiteUrl(name: string, slug: string): Promise<string | 
 }
 
 /**
- * Try common fee-page URL patterns directly against the university's origin,
- * without needing to crawl the homepage first.
+ * Try common fee-page URL patterns directly against the university's origin.
+ * No LLM cost. Returns up to 4 live URLs.
  */
 async function probeFeeUrls(origin: string): Promise<string[]> {
   const found: string[] = [];
@@ -282,7 +310,7 @@ async function probeFeeUrls(origin: string): Promise<string[]> {
     const url = origin.replace(/\/$/, "") + suffix;
     if (await safeHead(url)) {
       found.push(url);
-      if (found.length >= 4) break; // enough candidates
+      if (found.length >= 4) break;
     }
     await sleep(200);
   }
@@ -293,6 +321,10 @@ async function probeFeeUrls(origin: string): Promise<string[]> {
 // LLM helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Ask GPT to pick fee page URLs from a link list.
+ * Only called when direct probing found fewer than 2 URLs.
+ */
 async function askGptForFeeLinks(
   universityName: string,
   allLinks: string[],
@@ -300,81 +332,80 @@ async function askGptForFeeLinks(
   if (allLinks.length === 0) return [];
 
   const feeLinks = allLinks.filter(looksLikeFeeLink);
-  const linksToSend = (feeLinks.length > 0 ? feeLinks : allLinks).slice(0, 60);
+  // If keyword matching already found enough, skip the LLM call entirely
+  if (feeLinks.length >= 3) return feeLinks.slice(0, 5);
+
+  const linksToSend = (feeLinks.length > 0 ? feeLinks : allLinks).slice(0, 50);
 
   const prompt = `University: ${universityName}
 
-Choose up to 5 URLs from this list that are most likely to contain tuition fee or programme cost tables for this Turkish university. Prefer pages with "ücret", "harç", "tuition", "fee", or "mali" in the URL path.
+Pick up to 5 URLs most likely to contain tuition fee tables. Prefer paths with "ücret", "harç", "tuition", "fee", "mali" in them.
 
 Links:
 ${linksToSend.join("\n")}
 
-Return ONLY a JSON array of URLs, e.g. ["url1", "url2"]`;
+Return ONLY a JSON array of URLs: ["url1","url2"]`;
 
   try {
     const res = await getOpenAI().chat.completions.create({
       model: MODEL,
-      max_completion_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: 300,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: 'Return {"urls":["url1","url2"]}',
+        },
+        { role: "user", content: prompt },
+      ],
     });
-    const text = res.choices[0]?.message?.content ?? "[]";
-    const parsed = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
-    return Array.isArray(parsed) ? parsed.slice(0, 5) : [];
+    const text = res.choices[0]?.message?.content ?? '{"urls":[]}';
+    const parsed = JSON.parse(text);
+    const urls: unknown = parsed.urls ?? parsed;
+    return Array.isArray(urls) ? (urls as string[]).slice(0, 5) : [];
   } catch {
     return feeLinks.slice(0, 3);
   }
 }
 
+/**
+ * Extract fee rows from a single page's text content.
+ */
 async function extractFeesFromPage(
   universityName: string,
   pageUrl: string,
   pageContent: string,
 ): Promise<ExtractedFeePage | null> {
-  const prompt = `You are extracting tuition fee data from a Turkish university website page.
+  const prompt = `Extract tuition fee data from this Turkish university page.
 
 University: ${universityName}
-Page URL: ${pageUrl}
+URL: ${pageUrl}
 
-Page content (tables preserved as markdown):
+Content:
 ${pageContent}
 
-Extract ALL tuition fee information you can find. Each entry should be one specific academic programme (department/bölüm), not a general category.
-
-Return a JSON object:
-{
-  "academic_year": "2024-2025",
-  "currency": "TRY",
-  "fees": [
-    {
-      "program_name": "Bilgisayar Mühendisliği",
-      "degree_type": "bachelor",
-      "domestic_fee": 95000,
-      "international_fee": 12000,
-      "currency": "TRY"
-    }
-  ]
-}
-
 Rules:
-- degree_type must be one of: associate, bachelor, master, doctorate
-- domestic_fee / international_fee: numeric value only (no commas, no currency symbols), null if not found
-- currency: TRY (Turkish Lira), USD, or EUR
-- Include both Turkish and English programme names when you see them — use the Turkish name
-- If amounts use dots as thousands separators (e.g. 95.000), convert to plain integers (95000)
-- If a row shows only one fee amount with no domestic/international distinction, put it in domestic_fee and set international_fee to null
-- If the page has no fee data, return {"academic_year":"","currency":"TRY","fees":[]}
-- Return ONLY valid JSON, no explanation or markdown fences`;
+- Each fee entry = one specific academic programme (not a general category)
+- degree_type: associate | bachelor | master | doctorate
+- domestic_fee / international_fee: number only (strip commas/dots used as thousands separators), null if absent
+- currency: TRY, USD, or EUR
+- Use Turkish programme name when available
+- If one fee column with no domestic/international split: put in domestic_fee, set international_fee null
+- academic_year: e.g. "2024-2025" (infer from page or use current year)
+- If no fee data found: return {"academic_year":"","currency":"TRY","fees":[]}
+
+Return JSON matching this schema exactly:
+{"academic_year":"2024-2025","currency":"TRY","fees":[{"program_name":"string","degree_type":"bachelor","domestic_fee":95000,"international_fee":null,"currency":"TRY"}]}`;
 
   try {
     const res = await getOpenAI().chat.completions.create({
       model: MODEL,
-      max_completion_tokens: 4096,
+      max_completion_tokens: 3000,
+      response_format: { type: "json_object" },
       messages: [{ role: "user", content: prompt }],
     });
-    const text = res.choices[0]?.message?.content ?? "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-    const parsed: ExtractedFeePage = JSON.parse(jsonMatch[0]);
+    const text = res.choices[0]?.message?.content ?? "{}";
+    const parsed: ExtractedFeePage = JSON.parse(text);
     if (!Array.isArray(parsed.fees)) return null;
     return parsed;
   } catch {
@@ -383,56 +414,71 @@ Rules:
 }
 
 // ---------------------------------------------------------------------------
-// LLM-based program matching
+// Batched LLM program matching (ONE call per university, not one per fee row)
 // ---------------------------------------------------------------------------
 
-type DBProgram = {
-  id: number;
-  name_tr: string;
-  name_en: string;
-  degree_type: string;
-};
-
 /**
- * Use the LLM to match extracted fee entries to DB programs.
- * Returns a map of extracted fee index → array of matching program IDs.
- * Much more accurate than simple string includes() matching.
+ * Match ALL extracted fees to DB programs in a single LLM call.
+ * Returns a map: fee index (string) → array of matching program IDs.
+ *
+ * This replaces the previous per-row approach which made N LLM calls for N fees.
  */
-async function llmMatchFeeToPrograms(
-  fee: ExtractedFee,
-  candidates: DBProgram[],
-): Promise<number[]> {
-  if (candidates.length === 0) return [];
+async function batchMatchFeesToPrograms(
+  fees: ExtractedFee[],
+  dbPrograms: DBProgram[],
+): Promise<Map<number, number[]>> {
+  const result = new Map<number, number[]>();
+  if (fees.length === 0 || dbPrograms.length === 0) return result;
 
-  const programList = candidates
-    .map((p) => `id:${p.id} | ${p.name_tr} / ${p.name_en} (${p.degree_type})`)
+  // Build a compact fee list (index + name + degree)
+  const feeList = fees
+    .map((f, i) => `${i}: "${f.program_name}" (${f.degree_type})`)
     .join("\n");
 
-  const prompt = `Match this extracted fee entry to the correct university programme(s) from the list below.
+  // Build a compact program list
+  const programList = dbPrograms
+    .map((p) => `id:${p.id} ${p.name_tr} / ${p.name_en} (${p.degree_type})`)
+    .join("\n");
 
-Extracted fee entry:
-- Programme name: "${fee.program_name}"
-- Degree type: ${fee.degree_type}
+  const prompt = `Match each extracted fee entry (by index) to the correct programme ID(s) from the list below.
 
-Available programmes (id | Turkish name / English name | degree):
+Extracted fees (index: name, degree):
+${feeList}
+
+Available programmes (id name_tr / name_en degree):
 ${programList}
 
-Return a JSON array of matching programme IDs (integers). Return [] if no confident match exists.
-Match only by name similarity — the degree type already filters the list.
-Return ONLY a JSON array, e.g. [12] or [12, 15] or []`;
+Rules:
+- Match by name similarity; degree type is a strong hint but name match takes priority
+- Only return confident matches; use [] for no match
+- A fee entry may match multiple programme IDs (e.g. same programme offered at multiple faculties)
+
+Return JSON: {"matches":{"0":[12],"1":[15,16],"2":[]}}`;
 
   try {
     const res = await getOpenAI().chat.completions.create({
       model: MODEL,
-      max_completion_tokens: 128,
+      max_completion_tokens: 800,
+      response_format: { type: "json_object" },
       messages: [{ role: "user", content: prompt }],
     });
-    const text = res.choices[0]?.message?.content ?? "[]";
-    const parsed = JSON.parse(text.match(/\[[\s\S]*?\]/)?.[0] ?? "[]");
-    return Array.isArray(parsed) ? parsed.filter((x: unknown) => typeof x === "number") : [];
-  } catch {
-    return [];
+    const text = res.choices[0]?.message?.content ?? '{"matches":{}}';
+    const parsed = JSON.parse(text);
+    const matches: Record<string, unknown> = parsed.matches ?? parsed;
+
+    for (const [key, val] of Object.entries(matches)) {
+      const idx = parseInt(key, 10);
+      if (isNaN(idx)) continue;
+      const ids = Array.isArray(val)
+        ? (val as unknown[]).filter((x): x is number => typeof x === "number")
+        : [];
+      result.set(idx, ids);
+    }
+  } catch (err) {
+    logger.warn({ err }, "Batch fee matching LLM call failed");
   }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -441,7 +487,6 @@ Return ONLY a JSON array, e.g. [12] or [12, 15] or []`;
 
 function mergeFeeExtractions(pages: ExtractedFeePage[]): ExtractedFeePage {
   const seen = new Map<string, ExtractedFee>();
-
   let academicYear = "";
   let currency = "TRY";
 
@@ -456,7 +501,6 @@ function mergeFeeExtractions(pages: ExtractedFeePage[]): ExtractedFeePage {
       if (!existing) {
         seen.set(key, fee);
       } else {
-        // Merge: prefer non-null values
         seen.set(key, {
           ...existing,
           domestic_fee: existing.domestic_fee ?? fee.domestic_fee,
@@ -484,7 +528,6 @@ async function saveFees(
 ): Promise<number> {
   if (merged.fees.length === 0) return 0;
 
-  // Load all active programs for this university
   const dbPrograms = await db
     .select({
       id: programsTable.id,
@@ -498,22 +541,22 @@ async function saveFees(
 
   if (dbPrograms.length === 0) return 0;
 
+  const fees = merged.fees.filter(
+    (f) => f.domestic_fee != null || f.international_fee != null,
+  );
+
+  if (fees.length === 0) return 0;
+
+  // ONE batched LLM call for all fees × all programs
+  const matchMap = await batchMatchFeesToPrograms(fees, dbPrograms);
+
   const academicYear = merged.academic_year;
   let saved = 0;
 
-  for (const fee of merged.fees) {
-    if (fee.domestic_fee == null && fee.international_fee == null) continue;
-
-    // Narrow candidates by degree_type before asking LLM (reduces prompt size + cost)
-    const typeCandidates = fee.degree_type
-      ? dbPrograms.filter((p) => p.degree_type === fee.degree_type)
-      : dbPrograms;
-
-    if (typeCandidates.length === 0) continue;
-
-    // LLM matching
-    const matchedIds = await llmMatchFeeToPrograms(fee, typeCandidates);
+  for (const [feeIdx, matchedIds] of matchMap.entries()) {
     if (matchedIds.length === 0) continue;
+    const fee = fees[feeIdx];
+    if (!fee) continue;
 
     const currency = fee.currency || merged.currency || "TRY";
     const values = {
@@ -522,7 +565,10 @@ async function saveFees(
       currency,
     };
 
-    for (const programId of matchedIds) {
+    // Validate IDs are actually in our DB programs list
+    const validIds = matchedIds.filter((id) => dbPrograms.some((p) => p.id === id));
+
+    for (const programId of validIds) {
       const [existing] = await db
         .select({ id: tuitionFeesTable.id })
         .from(tuitionFeesTable)
@@ -546,8 +592,6 @@ async function saveFees(
       }
       saved++;
     }
-
-    await sleep(150); // small pause between LLM matching calls
   }
 
   return saved;
@@ -592,22 +636,23 @@ async function crawlUniversity(
     result.status = "fetching";
     const origin = new URL(websiteUrl).origin;
 
-    // 2. Probe common fee URL patterns directly (fast, no LLM cost)
+    // 2. Probe common fee URL patterns directly (zero LLM cost)
     const probedFeeUrls = await probeFeeUrls(origin);
 
-    // 3. Fetch homepage to discover additional fee links via LLM
-    const homepage = await safeFetch(websiteUrl);
+    // 3. Only fetch homepage + run LLM link discovery when probing didn't find enough
     let llmFeeUrls: string[] = [];
+    let homepage: string | null = null;
 
-    if (homepage) {
-      result.pages_fetched++;
-      const allLinks = extractLinks(homepage, websiteUrl);
-      llmFeeUrls = await askGptForFeeLinks(uni.name_en, allLinks);
+    if (probedFeeUrls.length < 2) {
+      homepage = await safeFetch(websiteUrl);
+      if (homepage) {
+        result.pages_fetched++;
+        const allLinks = extractLinks(homepage, websiteUrl);
+        llmFeeUrls = await askGptForFeeLinks(uni.name_en, allLinks);
+      }
     }
 
-    // Combine: probed URLs first, then LLM-suggested, then keyword-matched from homepage
-    const keywordLinks = homepage ? extractLinks(homepage, websiteUrl).filter(looksLikeFeeLink).slice(0, 5) : [];
-    const allFeeUrls = [...new Set([...probedFeeUrls, ...llmFeeUrls, ...keywordLinks])].slice(0, 8);
+    const allFeeUrls = [...new Set([...probedFeeUrls, ...llmFeeUrls])].slice(0, 6);
 
     if (allFeeUrls.length === 0 && !homepage) {
       result.status = "no_url";
@@ -615,7 +660,7 @@ async function crawlUniversity(
       return result;
     }
 
-    // 4. Fetch each fee page and extract
+    // 4. Fetch each fee page, check for content, then extract
     result.status = "extracting";
     const extractions: ExtractedFeePage[] = [];
 
@@ -626,20 +671,26 @@ async function crawlUniversity(
       result.pages_fetched++;
 
       const content = extractTextWithTables(html);
+
+      // Skip LLM call if page clearly has no fee content
+      if (!hasFeeContent(content)) continue;
+
       const extracted = await extractFeesFromPage(uni.name_en, url, content);
       if (extracted && extracted.fees.length > 0) {
         extractions.push(extracted);
       }
     }
 
-    // 5. If no fee pages found at all, try extracting from homepage itself
+    // 5. Fallback: try homepage itself if nothing found from fee pages
     if (extractions.length === 0 && homepage) {
       const content = extractTextWithTables(homepage);
-      const extracted = await extractFeesFromPage(uni.name_en, websiteUrl, content);
-      if (extracted && extracted.fees.length > 0) extractions.push(extracted);
+      if (hasFeeContent(content)) {
+        const extracted = await extractFeesFromPage(uni.name_en, websiteUrl, content);
+        if (extracted && extracted.fees.length > 0) extractions.push(extracted);
+      }
     }
 
-    // 6. Merge all extractions and save
+    // 6. Merge all extractions and save (one batched LLM match call)
     if (extractions.length > 0) {
       const merged = mergeFeeExtractions(extractions);
       result.fees_saved = await saveFees(uni.id, merged);
