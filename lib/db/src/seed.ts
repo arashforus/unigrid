@@ -599,10 +599,15 @@ async function seed() {
 
   console.log(`✓ ${programs.length} tuition fee records inserted`);
   console.log("Seeding complete.");
-  process.exit(0);
 }
 
-seed().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+// Allow direct invocation: pnpm --filter @workspace/db run seed
+const isMain = process.argv[1]?.endsWith("seed.ts") || process.argv[1]?.endsWith("seed.js");
+if (isMain) {
+  seed().then(() => process.exit(0)).catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+  });
+}
+
+export { seed };
