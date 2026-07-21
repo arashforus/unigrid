@@ -113,7 +113,7 @@ function extractLinks(html: string, baseUrl: string): string[] {
   const seen = new Set<string>();
   const results: string[] = [];
   const base = new URL(baseUrl);
-  const pattern = /href=["']([^"'#?]+)["']/gi;
+  const pattern = /href=["']([^"'#]+)["']/gi;
   let m: RegExpExecArray | null;
   while ((m = pattern.exec(html)) !== null) {
     try {
@@ -175,7 +175,7 @@ async function discoverWebsiteUrl(
         redirect: "follow",
       });
       clearTimeout(timer);
-      if (res.ok || res.status === 301 || res.status === 302) {
+      if (res.ok || (res.status >= 300 && res.status < 400)) {
         return url;
       }
     } catch {}
@@ -192,15 +192,18 @@ async function askGptForFeeLinks(
   pageText: string,
   allLinks: string[],
 ): Promise<string[]> {
-  const feeLinks = allLinks.filter(looksLikeFeeLink).slice(0, 30);
-  if (feeLinks.length === 0) return [];
+  if (allLinks.length === 0) return [];
+
+  // Prefer keyword-matching links; if none found, send all links so LLM can decide
+  const feeLinks = allLinks.filter(looksLikeFeeLink);
+  const linksToSend = (feeLinks.length > 0 ? feeLinks : allLinks).slice(0, 50);
 
   const prompt = `University: ${universityName}
 
 Here are links found on the university homepage. Pick the ones most likely to contain tuition fee or programme cost information. Return a JSON array of URLs only. Max 5 URLs.
 
 Links:
-${feeLinks.join("\n")}
+${linksToSend.join("\n")}
 
 Respond with ONLY a JSON array like: ["url1", "url2"]`;
 
