@@ -1,6 +1,13 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { feeCrawlJobsTable, emptyFeeCrawlStats, universitiesTable } from "@workspace/db";
+import {
+  feeCrawlJobsTable,
+  emptyFeeCrawlStats,
+  universitiesTable,
+  tuitionFeesTable,
+  programsTable,
+  facultiesTable,
+} from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { runFeeCrawlJob } from "../../lib/llmFeeCrawler";
 
@@ -102,6 +109,39 @@ router.post("/fee-crawler/run", async (req, res) => {
     res.status(202).json(job);
   } catch (err) {
     req.log.error({ err }, "Failed to start fee crawl job");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /admin/fee-crawler/universities/:id/fees
+// Returns all tuition fees for a university joined with programme names.
+router.get("/fee-crawler/universities/:id/fees", async (req, res) => {
+  const universityId = Number(req.params.id);
+  if (!universityId || Number.isNaN(universityId)) {
+    res.status(400).json({ error: "Invalid university id" });
+    return;
+  }
+  try {
+    const fees = await db
+      .select({
+        fee_id: tuitionFeesTable.id,
+        program_id: programsTable.id,
+        program_name_en: programsTable.name_en,
+        program_name_tr: programsTable.name_tr,
+        degree_type: programsTable.degree_type,
+        academic_year: tuitionFeesTable.academic_year,
+        domestic_fee: tuitionFeesTable.domestic_fee,
+        international_fee: tuitionFeesTable.international_fee,
+        currency: tuitionFeesTable.currency,
+      })
+      .from(tuitionFeesTable)
+      .innerJoin(programsTable, eq(tuitionFeesTable.program_id, programsTable.id))
+      .innerJoin(facultiesTable, eq(programsTable.faculty_id, facultiesTable.id))
+      .where(eq(facultiesTable.university_id, universityId))
+      .orderBy(programsTable.degree_type, programsTable.name_en);
+    res.json(fees);
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch university fees");
     res.status(500).json({ error: "Internal server error" });
   }
 });

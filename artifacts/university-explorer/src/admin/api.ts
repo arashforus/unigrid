@@ -180,6 +180,18 @@ export type FeeCrawlerUniversity = {
   website_url: string | null;
 };
 
+export type FoundFee = {
+  fee_id: number;
+  program_id: number;
+  program_name_en: string;
+  program_name_tr: string;
+  degree_type: string;
+  academic_year: string;
+  domestic_fee: string | null;
+  international_fee: string | null;
+  currency: string;
+};
+
 export const adminApi = {
   dashboard: () => request<AdminDashboard>('/dashboard'),
   stats: () => request<AdminStats>('/stats'),
@@ -238,5 +250,6 @@ export const adminApi = {
       get: (id: number) => request<AdminFeeCrawlJob>(`/fee-crawler/jobs/${id}`),
     },
     universities: () => request<FeeCrawlerUniversity[]>('/fee-crawler/universities'),
+    universityFees: (id: number) => request<FoundFee[]>(`/fee-crawler/universities/${id}/fees`),
   },
 };
