@@ -366,19 +366,19 @@ export default function AdminSettingsPage() {
   const [tab, setTab] = useState<Tab>('general');
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">Manage site configuration and integrations.</p>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 p-1 bg-card border border-border rounded-xl w-fit">
+      <div className="flex gap-1 p-1 bg-card border border-border rounded-xl w-full">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               tab === t.id
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-accent'
