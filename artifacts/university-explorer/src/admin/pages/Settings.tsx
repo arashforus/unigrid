@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi, type AdminSettings, type ApiKeysState } from '@/admin/api';
-import { Loader2, Save, CheckCircle2, KeyRound, Eye, EyeOff, Settings2 } from 'lucide-react';
+import { Loader2, Save, CheckCircle2, KeyRound, Eye, EyeOff, Settings2, Bot } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // General settings tab
@@ -229,14 +229,118 @@ function ApiKeysTab() {
 }
 
 // ---------------------------------------------------------------------------
+// AI tab
+// ---------------------------------------------------------------------------
+
+function AiTab() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ['admin', 'settings'], queryFn: adminApi.settings.get });
+  const [model, setModel] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => { if (data) setModel(data.openai_model ?? 'gpt-4.1-mini'); }, [data]);
+
+  const mutation = useMutation({
+    mutationFn: (payload: Partial<AdminSettings>) => adminApi.settings.update(payload),
+    onSuccess: (updated) => {
+      qc.setQueryData(['admin', 'settings'], updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    },
+  });
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Model selector card */}
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Bot className="w-4 h-4 text-muted-foreground" />
+            <span className="font-semibold text-sm">Fee Crawler Model</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            The OpenAI model used by the Fee Crawler to look up and extract tuition fees.
+            Changes take effect on the next crawl run.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Model name</label>
+          <input
+            type="text"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder="e.g. gpt-4.1-mini, gpt-4o, gpt-4o-mini"
+            className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          />
+        </div>
+
+        {/* Quick-pick chips */}
+        <div>
+          <p className="text-xs text-muted-foreground mb-2">Quick pick</p>
+          <div className="flex flex-wrap gap-2">
+            {['gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini', 'gpt-4o'].map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setModel(m)}
+                className={`px-3 py-1 rounded-lg text-xs font-mono border transition-all ${
+                  model === m
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {mutation.isError && (
+          <div className="px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+            {(mutation.error as Error).message}
+          </div>
+        )}
+
+        <button
+          type="button"
+          disabled={!model.trim() || mutation.isPending}
+          onClick={() => mutation.mutate({ openai_model: model.trim() })}
+          className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+        >
+          {mutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : saved ? (
+            <><CheckCircle2 className="w-4 h-4" /> Saved</>
+          ) : (
+            <><Save className="w-4 h-4" /> Save Model</>
+          )}
+        </button>
+      </div>
+
+      <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs leading-relaxed">
+        <strong>Note:</strong> The model must support <code className="font-mono">response_format: json_object</code>.
+        Recommended: <code className="font-mono">gpt-4.1-mini</code> (fast &amp; cheap) or <code className="font-mono">gpt-4o-mini</code>.
+        Make sure your OpenAI API key (set in the API Keys tab) has access to the chosen model.
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page shell with tabs
 // ---------------------------------------------------------------------------
 
-type Tab = 'general' | 'api-keys';
+type Tab = 'general' | 'api-keys' | 'ai';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'general', label: 'General', icon: <Settings2 className="w-4 h-4" /> },
   { id: 'api-keys', label: 'API Keys', icon: <KeyRound className="w-4 h-4" /> },
+  { id: 'ai', label: 'AI', icon: <Bot className="w-4 h-4" /> },
 ];
 
 export default function AdminSettingsPage() {
@@ -269,6 +373,7 @@ export default function AdminSettingsPage() {
 
       {tab === 'general' && <GeneralTab />}
       {tab === 'api-keys' && <ApiKeysTab />}
+      {tab === 'ai' && <AiTab />}
     </div>
   );
 }

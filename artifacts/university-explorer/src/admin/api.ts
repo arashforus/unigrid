@@ -98,6 +98,7 @@ export type AdminSettings = {
   whatsapp_number: string;
   featured_university_slug: string;
   maintenance_mode: string;
+  openai_model: string;
 };
 
 export type ApiKeyStatus = {

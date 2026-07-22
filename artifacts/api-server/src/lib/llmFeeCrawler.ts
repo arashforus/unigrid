@@ -13,6 +13,7 @@
 
 import OpenAI from "openai";
 import { db } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import {
   feeCrawlJobsTable,
   universitiesTable,
@@ -23,6 +24,21 @@ import {
   type FeeCrawlStats,
   type FeeCrawlUniversityResult,
 } from "@workspace/db";
+
+const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
+
+async function getOpenAIModel(): Promise<string> {
+  try {
+    const [row] = await db
+      .select({ value: settingsTable.value })
+      .from(settingsTable)
+      .where(eq(settingsTable.key, "openai_model"))
+      .limit(1);
+    return row?.value?.trim() || DEFAULT_OPENAI_MODEL;
+  } catch {
+    return DEFAULT_OPENAI_MODEL;
+  }
+}
 import { eq, and, inArray } from "drizzle-orm";
 import { logger } from "./logger";
 
@@ -123,8 +139,9 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
   }
 }`;
 
+  const model = await getOpenAIModel();
   const res = await openai.chat.completions.create({
-    model: "gpt-5.4-nano",
+    model,
     response_format: { type: "json_object" },
     max_completion_tokens: 4000,
     messages: [

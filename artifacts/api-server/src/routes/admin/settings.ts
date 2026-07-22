@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   whatsapp_number: "",
   featured_university_slug: "",
   maintenance_mode: "false",
+  openai_model: "gpt-4.1-mini",
 };
 
 // GET /admin/settings
