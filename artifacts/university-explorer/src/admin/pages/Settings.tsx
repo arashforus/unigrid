@@ -283,7 +283,26 @@ function AiTab() {
         <div>
           <p className="text-xs text-muted-foreground mb-2">Quick pick</p>
           <div className="flex flex-wrap gap-2">
-            {['gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini', 'gpt-4o'].map((m) => (
+            {[
+              // GPT-5.6 family (newest)
+              'gpt-5.6-sol',
+              'gpt-5.6-terra',
+              'gpt-5.6-luna',
+              // GPT-5.5 family
+              'gpt-5.5-pro',
+              'gpt-5.5',
+              // GPT-5.4 family
+              'gpt-5.4-pro',
+              'gpt-5.4',
+              'gpt-5.4-mini',
+              'gpt-5.4-nano',
+              // GPT-4.1 family
+              'gpt-4.1',
+              'gpt-4.1-mini',
+              // GPT-4o family
+              'gpt-4o',
+              'gpt-4o-mini',
+            ].map((m) => (
               <button
                 key={m}
                 type="button"
