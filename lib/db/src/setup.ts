@@ -56,6 +56,21 @@ export async function ensureDatabase(): Promise<void> {
       console.log("[db] Schema pushed.");
     }
 
+    // Ensure the connect-pg-simple session table exists (not managed by Drizzle)
+    const hasSession = await tableExists(pool, "session");
+    if (!hasSession) {
+      await pool.query(`
+        CREATE TABLE "session" (
+          "sid" varchar NOT NULL COLLATE "default",
+          "sess" json NOT NULL,
+          "expire" timestamp(6) NOT NULL,
+          CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+        );
+        CREATE INDEX "IDX_session_expire" ON "session" ("expire");
+      `);
+      console.log("[db] Session table created.");
+    }
+
     const count = await rowCount(pool, "universities");
     if (count === 0) {
       console.log("[db] No data found — seeding…");
