@@ -19,6 +19,7 @@ import {
   facultiesTable,
   programsTable,
   tuitionFeesTable,
+  settingsTable,
   type FeeCrawlStats,
   type FeeCrawlUniversityResult,
 } from "@workspace/db";
@@ -26,21 +27,20 @@ import { eq, and, inArray } from "drizzle-orm";
 import { logger } from "./logger";
 
 // ---------------------------------------------------------------------------
-// OpenAI client (lazy)
+// Resolve API key: env var takes priority, then DB setting
 // ---------------------------------------------------------------------------
 
-let _openai: OpenAI | null = null;
-
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error(
-        "OPENAI_API_KEY is not set. Add it as a secret in the Replit environment.",
-      );
-    }
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
-  return _openai;
+async function resolveApiKey(): Promise<string> {
+  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
+  const [row] = await db
+    .select({ value: settingsTable.value })
+    .from(settingsTable)
+    .where(eq(settingsTable.key, "openai_api_key"))
+    .limit(1);
+  if (row?.value) return row.value;
+  throw new Error(
+    "OpenAI API key is not configured. Add it in Admin → Settings → API Keys.",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -85,7 +85,9 @@ function currentAcademicYear(): string {
 async function fetchFeesFromLLM(
   universityName: string,
   programs: DBProgram[],
+  apiKey: string,
 ): Promise<LLMFeesResponse> {
+  const openai = new OpenAI({ apiKey });
   const academicYear = currentAcademicYear();
 
   const programLines = programs
@@ -120,7 +122,7 @@ Return ONLY valid JSON in this exact shape (no markdown, no explanation):
   }
 }`;
 
-  const res = await getOpenAI().chat.completions.create({
+  const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     max_completion_tokens: 2000,
@@ -197,6 +199,7 @@ async function upsertFees(
 
 async function processUniversity(
   uni: { id: number; name_en: string; slug: string; website_url: string | null },
+  apiKey: string,
 ): Promise<FeeCrawlUniversityResult> {
   const result: FeeCrawlUniversityResult = {
     university_id: uni.id,
@@ -229,7 +232,7 @@ async function processUniversity(
     result.status = "extracting";
 
     // 2. Ask OpenAI for fees
-    const llmFees = await fetchFeesFromLLM(uni.name_en, programs);
+    const llmFees = await fetchFeesFromLLM(uni.name_en, programs, apiKey);
 
     // 3. Upsert into DB
     result.fees_saved = await upsertFees(
@@ -278,6 +281,9 @@ export async function runFeeCrawlJob(
     .where(eq(feeCrawlJobsTable.id, jobId));
 
   try {
+    // Resolve API key once for the whole job (env var takes priority, then DB)
+    const apiKey = await resolveApiKey();
+
     const baseQuery = db
       .select({
         id: universitiesTable.id,
@@ -296,7 +302,7 @@ export async function runFeeCrawlJob(
     await updateJobStats(jobId, stats);
 
     for (const uni of universities) {
-      const result = await processUniversity(uni);
+      const result = await processUniversity(uni, apiKey);
       stats.results.push(result);
       stats.universities_done++;
       stats.fees_saved += result.fees_saved;

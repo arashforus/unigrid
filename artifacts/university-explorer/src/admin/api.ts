@@ -100,6 +100,15 @@ export type AdminSettings = {
   maintenance_mode: string;
 };
 
+export type ApiKeyStatus = {
+  set: boolean;
+  preview: string | null;
+};
+
+export type ApiKeysState = {
+  openai_api_key: ApiKeyStatus;
+};
+
 export type AdminDashboard = {
   total_users: number;
   total_universities: number;
@@ -232,6 +241,11 @@ export const adminApi = {
     get: () => request<AdminSettings>('/settings'),
     update: (data: Partial<AdminSettings>) =>
       request<AdminSettings>('/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  },
+  apiKeys: {
+    get: () => request<ApiKeysState>('/api-keys'),
+    update: (data: { openai_api_key?: string }) =>
+      request<ApiKeysState>('/api-keys', { method: 'PUT', body: JSON.stringify(data) }),
   },
   crawler: {
     run: () => request<AdminCrawlJob>('/crawler/run', { method: 'POST' }),

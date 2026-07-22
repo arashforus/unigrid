@@ -9,6 +9,7 @@ import settingsRouter from "./settings";
 import statsRouter from "./stats";
 import crawlerRouter from "./crawler";
 import feeCrawlerRouter from "./feeCrawler";
+import apiKeysRouter from "./apiKeys";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(settingsRouter);
 router.use(statsRouter);
 router.use(crawlerRouter);
 router.use(feeCrawlerRouter);
+router.use(apiKeysRouter);
 
 export default router;
