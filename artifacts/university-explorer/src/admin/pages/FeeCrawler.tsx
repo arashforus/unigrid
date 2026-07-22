@@ -634,12 +634,14 @@ export default function AdminFeeCrawlerPage() {
             )}
 
             {/* Stats grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {[
                 { label: 'With Fees', value: activeJob.stats.universities_with_fees, color: 'text-green-400' },
                 { label: 'No URL', value: activeJob.stats.universities_no_url, color: 'text-amber-400' },
                 { label: 'Failed', value: activeJob.stats.universities_failed, color: 'text-red-400' },
                 { label: 'Fee Rows Saved', value: activeJob.stats.fees_saved, color: 'text-primary' },
+                { label: 'AI Requests', value: activeJob.stats.llm_requests ?? 0, color: 'text-purple-400' },
+                { label: 'Tokens Used', value: (activeJob.stats.llm_tokens?.total ?? 0).toLocaleString(), color: 'text-sky-400' },
               ].map((s) => (
                 <div key={s.label} className="bg-secondary/50 rounded-xl p-3">
                   <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -698,6 +700,8 @@ export default function AdminFeeCrawlerPage() {
                       <span className="flex-1 text-sm text-muted-foreground">{fmt(job.started_at)}</span>
                       <span className="text-sm">{job.stats.fees_saved} fees</span>
                       <span className="text-sm text-muted-foreground">{job.stats.universities_done}/{job.stats.universities_total} unis</span>
+                      <span className="text-xs text-purple-400">{job.stats.llm_requests ?? 0} req</span>
+                      <span className="text-xs text-sky-400">{(job.stats.llm_tokens?.total ?? 0).toLocaleString()} tok</span>
                     </button>
                     {jobFeeEntries.length > 0 && (
                       <button

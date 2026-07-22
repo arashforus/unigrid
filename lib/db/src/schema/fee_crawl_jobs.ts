@@ -17,6 +17,8 @@ export type FeeCrawlStats = {
   universities_no_url: number;
   universities_failed: number;
   fees_saved: number;
+  llm_requests: number;
+  llm_tokens: { prompt: number; completion: number; total: number };
   results: FeeCrawlUniversityResult[];
 };
 
@@ -27,6 +29,8 @@ export const emptyFeeCrawlStats = (): FeeCrawlStats => ({
   universities_no_url: 0,
   universities_failed: 0,
   fees_saved: 0,
+  llm_requests: 0,
+  llm_tokens: { prompt: 0, completion: 0, total: 0 },
   results: [],
 });
 

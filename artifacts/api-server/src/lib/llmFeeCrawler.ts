@@ -82,6 +82,7 @@ type LLMFeeEntry = {
 /** Shape the model must return: { "programId": { ... } } */
 type LLMFeesResponse = {
   fees: Record<string, LLMFeeEntry>;
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 };
 
 // ---------------------------------------------------------------------------
@@ -153,14 +154,20 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
     ],
   });
 
+  const usage = {
+    prompt_tokens: res.usage?.prompt_tokens ?? 0,
+    completion_tokens: res.usage?.completion_tokens ?? 0,
+    total_tokens: res.usage?.total_tokens ?? 0,
+  };
+
   const raw = res.choices[0]?.message?.content ?? '{"fees":{}}';
   try {
-    const parsed = JSON.parse(raw) as LLMFeesResponse;
-    if (!parsed.fees || typeof parsed.fees !== "object") return { fees: {} };
-    return parsed;
+    const parsed = JSON.parse(raw) as { fees: Record<string, LLMFeeEntry> };
+    if (!parsed.fees || typeof parsed.fees !== "object") return { fees: {}, usage };
+    return { fees: parsed.fees, usage };
   } catch {
     logger.warn({ raw }, "Failed to parse LLM fee response");
-    return { fees: {} };
+    return { fees: {}, usage };
   }
 }
 
@@ -225,10 +232,15 @@ async function upsertFees(
 // Per-university handler
 // ---------------------------------------------------------------------------
 
+type ProcessResult = {
+  result: FeeCrawlUniversityResult;
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+};
+
 async function processUniversity(
   uni: { id: number; name_en: string; slug: string; website_url: string | null },
   apiKey: string,
-): Promise<FeeCrawlUniversityResult> {
+): Promise<ProcessResult> {
   const result: FeeCrawlUniversityResult = {
     university_id: uni.id,
     university_name: uni.name_en,
@@ -237,6 +249,7 @@ async function processUniversity(
     pages_fetched: 0,
     fees_saved: 0,
   };
+  const noUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
   try {
     // 1. Fetch this university's programmes from DB
@@ -254,28 +267,28 @@ async function processUniversity(
 
     if (programs.length === 0) {
       result.status = "done";
-      return result;
+      return { result, usage: noUsage };
     }
 
     result.status = "extracting";
 
     // 2. Ask OpenAI for fees
-    const llmFees = await fetchFeesFromLLM(uni.name_en, programs, apiKey);
+    const llmResponse = await fetchFeesFromLLM(uni.name_en, programs, apiKey);
 
     // 3. Upsert into DB
     result.fees_saved = await upsertFees(
       programs.map((p) => p.id),
-      llmFees,
+      llmResponse,
     );
 
     result.status = "done";
+    return { result, usage: llmResponse.usage };
   } catch (err) {
     result.status = "failed";
     result.error = (err as Error).message;
     logger.error({ err, uni: uni.name_en }, "University fee lookup failed");
+    return { result, usage: noUsage };
   }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -300,6 +313,8 @@ export async function runFeeCrawlJob(
     universities_no_url: 0,
     universities_failed: 0,
     fees_saved: 0,
+    llm_requests: 0,
+    llm_tokens: { prompt: 0, completion: 0, total: 0 },
     results: [],
   };
 
@@ -330,12 +345,19 @@ export async function runFeeCrawlJob(
     await updateJobStats(jobId, stats);
 
     for (const uni of universities) {
-      const result = await processUniversity(uni, apiKey);
+      const { result, usage } = await processUniversity(uni, apiKey);
       stats.results.push(result);
       stats.universities_done++;
       stats.fees_saved += result.fees_saved;
       if (result.status === "failed") stats.universities_failed++;
       else if (result.fees_saved > 0) stats.universities_with_fees++;
+      // Track LLM usage (only count requests where we actually called the API)
+      if (usage.total_tokens > 0) {
+        stats.llm_requests++;
+        stats.llm_tokens.prompt += usage.prompt_tokens;
+        stats.llm_tokens.completion += usage.completion_tokens;
+        stats.llm_tokens.total += usage.total_tokens;
+      }
       await updateJobStats(jobId, stats);
     }
 
