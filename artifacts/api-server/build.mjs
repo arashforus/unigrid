@@ -34,6 +34,8 @@ async function buildAll() {
       "sqlite3",
       "canvas",
       "bcrypt",
+      "bcryptjs",
+      "connect-pg-simple",
       "argon2",
       "fsevents",
       "re2",

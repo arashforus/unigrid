@@ -100,22 +100,28 @@ function ApiKeyField({
   status,
   onSave,
   isSaving,
+  saveError,
 }: {
   label: string;
   description: string;
   status: ApiKeysState['openai_api_key'] | undefined;
-  onSave: (value: string) => void;
+  onSave: (value: string) => Promise<void>;
   isSaving: boolean;
+  saveError?: string | null;
 }) {
   const [value, setValue] = useState('');
   const [show, setShow] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    onSave(value);
-    setSaved(true);
-    setValue('');
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    try {
+      await onSave(value);
+      setSaved(true);
+      setValue('');
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      // error displayed via saveError prop
+    }
   };
 
   return (
@@ -165,6 +171,12 @@ function ApiKeyField({
         </div>
       </div>
 
+      {saveError && (
+        <div className="px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+          {saveError}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={handleSave}
@@ -208,14 +220,10 @@ function ApiKeysTab() {
         label="OpenAI API Key"
         description="Used by the Fee Crawler to look up tuition fees via GPT-4o mini."
         status={data?.openai_api_key}
-        onSave={(value) => mutation.mutate({ openai_api_key: value })}
+        onSave={(value) => mutation.mutateAsync({ openai_api_key: value })}
         isSaving={mutation.isPending}
+        saveError={mutation.isError ? (mutation.error as Error).message : null}
       />
-      {mutation.isError && (
-        <div className="px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          {(mutation.error as Error).message}
-        </div>
-      )}
     </div>
   );
 }
