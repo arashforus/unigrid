@@ -45,7 +45,7 @@ export default function UniversityDetail() {
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,hsl(var(--background)))] pointer-events-none opacity-50 z-0"></div>
         
         <div className="max-w-5xl mx-auto px-6 pt-12 pb-8 relative z-10">
-          <Link href="/explore" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8">
+          <Link href="/universities" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8">
             <DirectionalIcon icon={ArrowLeft} className="w-4 h-4" />
             {t('common.back')}
           </Link>

@@ -9,6 +9,7 @@ import { Navbar } from '@/components/Navbar';
 import Home from '@/pages/Home';
 import Explore from '@/pages/Explore';
 import UniversityDetail from '@/pages/University';
+import UniversitiesPage from '@/pages/Universities';
 import ProgramDetail from '@/pages/Program';
 import Services from '@/pages/Services';
 import LoginPage from '@/pages/Login';
@@ -49,6 +50,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/explore" component={Explore} />
+        <Route path="/universities" component={UniversitiesPage} />
         <Route path="/university" component={UniversityDetail} />
         <Route path="/program" component={ProgramDetail} />
         <Route path="/services" component={Services} />

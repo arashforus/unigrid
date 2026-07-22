@@ -122,6 +122,17 @@ export default {
     consultingDesc: "Our professional team handles your entire application journey — document preparation, university matching, and submission — so you can focus on what matters.",
     consultingCta: "Talk to an Advisor",
   },
+  universities: {
+    badge: "All Turkish Universities",
+    title: "Universities",
+    subtitle: "Browse every Turkish university, filter by type or city, and find the perfect fit for your goals.",
+    searchPlaceholder: "Search by name or city...",
+    noResults: "No universities match your search.",
+    allTypes: "All Types",
+    allCities: "All Cities",
+    totalCount: "universities",
+    viewUniversity: "View University",
+  },
   common: {
     loading: "Loading...",
     error: "An error occurred",

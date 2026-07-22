@@ -40,6 +40,9 @@ export function Navbar() {
             <Link href="/explore" className="text-muted-foreground hover:text-foreground transition-colors">
               {t('nav.explore')}
             </Link>
+            <Link href="/universities" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t('nav.universities')}
+            </Link>
             <Link href="/services" className="text-primary font-semibold hover:text-primary/80 transition-colors">
               {t('nav.services')}
             </Link>

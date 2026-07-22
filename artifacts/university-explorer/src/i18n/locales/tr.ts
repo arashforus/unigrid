@@ -122,6 +122,17 @@ export default {
     consultingDesc: "Profesyonel ekibimiz, belge hazırlığından üniversite eşleştirmesine ve başvuru gönderiminden kabul takibine kadar tüm sürecini yönetir.",
     consultingCta: "Danışmanla Konuş",
   },
+  universities: {
+    badge: "Tüm Türk Üniversiteleri",
+    title: "Üniversiteler",
+    subtitle: "Tüm Türk üniversitelerini inceleyin, tür veya şehre göre filtreleyin ve hedeflerinize en uygun olanı bulun.",
+    searchPlaceholder: "İsim veya şehir ara...",
+    noResults: "Aramanıza uygun üniversite bulunamadı.",
+    allTypes: "Tüm Türler",
+    allCities: "Tüm Şehirler",
+    totalCount: "üniversite",
+    viewUniversity: "Üniversiteyi Görüntüle",
+  },
   common: {
     loading: "Yükleniyor...",
     error: "Bir hata oluştu",
