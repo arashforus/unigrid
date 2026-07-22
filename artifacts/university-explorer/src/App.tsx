@@ -26,6 +26,7 @@ import AdminFeeCrawlerPage from '@/admin/pages/FeeCrawler';
 import AdminStatisticsPage from '@/admin/pages/Statistics';
 import AdminTasksPage from '@/admin/pages/Tasks';
 import AdminSettingsPage from '@/admin/pages/Settings';
+import AdminUniversityUrlsPage from '@/admin/pages/UniversityUrls';
 
 import '@/i18n'; // Initialize i18n
 
@@ -65,6 +66,7 @@ function Router() {
         <Route path="/admin/statistics" component={() => <AdminLayout><AdminStatisticsPage /></AdminLayout>} />
         <Route path="/admin/tasks" component={() => <AdminLayout><AdminTasksPage /></AdminLayout>} />
         <Route path="/admin/settings" component={() => <AdminLayout><AdminSettingsPage /></AdminLayout>} />
+        <Route path="/admin/university-urls" component={() => <AdminLayout><AdminUniversityUrlsPage /></AdminLayout>} />
         <Route component={NotFound} />
       </Switch>
     </>

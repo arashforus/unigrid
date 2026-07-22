@@ -210,6 +210,7 @@ export const adminApi = {
     update: (id: number, data: Partial<AdminUniversity>) =>
       request<AdminUniversity>(`/universities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: number) => request<{ ok: true }>(`/universities/${id}`, { method: 'DELETE' }),
+    findUrl: (id: number) => request<{ url: string | null }>(`/universities/${id}/find-url`, { method: 'POST' }),
   },
   faculties: {
     list: () => request<AdminFaculty[]>('/faculties'),
