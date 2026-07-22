@@ -59,7 +59,7 @@ type LLMFeeEntry = {
   domestic_fee: number | null;
   international_fee: number | null;
   currency: string;
-  academic_year: string;
+  academic_year?: string;
 };
 
 /** Shape the model must return: { "programId": { ... } } */
@@ -93,40 +93,44 @@ async function fetchFeesFromLLM(
   const programLines = programs
     .map(
       (p) =>
-        `  id:${p.id}  ${p.name_en} / ${p.name_tr}  (${p.degree_type})  [${p.faculty_name_en}]`,
+        `id:${p.id} | ${p.name_en} | ${p.name_tr} | ${p.degree_type} | ${p.faculty_name_en}`,
     )
     .join("\n");
 
-  const prompt = `You are a higher-education data assistant. Your task is to provide tuition fee estimates for a Turkish university's programmes.
+  const systemPrompt = `You are an expert on Turkish higher education tuition fees. You have detailed knowledge of tuition costs at Turkish universities, both state and private (vakıf), for domestic and international students. You always respond with valid JSON only.`;
 
-University: ${universityName}
-Academic year: ${academicYear}
+  const userPrompt = `I need the tuition fees for the following programmes at ${universityName}.
 
-Programmes (use the exact numeric IDs as keys in your response):
+Programme list (format: id | English name | Turkish name | degree | faculty):
 ${programLines}
 
-Instructions:
-- Return your best estimate of tuition fees for each programme based on your knowledge of Turkish university pricing.
-- Fees are in Turkish Lira (TRY) unless you know the university uses a different currency.
-- domestic_fee: fee for Turkish citizens (null if unknown).
-- international_fee: fee for international/foreign students (null if unknown).
-- If you have no knowledge of a programme's fee, set both to null — do NOT invent numbers you are not confident about.
-- academic_year must be "${academicYear}".
-- currency is usually "TRY"; use "USD" or "EUR" only if the university publicly quotes fees in that currency.
+For each programme, provide:
+- domestic_fee: annual fee in TRY for Turkish/domestic students (integer, or null if truly unknown)
+- international_fee: annual fee in TRY for international/foreign students (integer, or null if truly unknown)
+- currency: "TRY" for Turkish Lira, "USD" or "EUR" only if the university officially uses those currencies
 
-Return ONLY valid JSON in this exact shape (no markdown, no explanation):
+Important:
+- ${universityName} is a real Turkish university — use your knowledge of its actual fee structure.
+- Private (vakıf) universities charge significant fees; state universities charge very low fees.
+- Provide your best known estimate. Only use null if you have absolutely no basis for an estimate.
+- Use the exact programme id numbers as the JSON keys.
+
+Respond ONLY with this JSON structure, no markdown, no explanation:
 {
   "fees": {
-    "42": { "domestic_fee": 95000, "international_fee": 180000, "currency": "TRY", "academic_year": "${academicYear}" },
-    "43": { "domestic_fee": null, "international_fee": null, "currency": "TRY", "academic_year": "${academicYear}" }
+    "42": { "domestic_fee": 95000, "international_fee": 150000, "currency": "TRY" },
+    "43": { "domestic_fee": 3500, "international_fee": null, "currency": "TRY" }
   }
 }`;
 
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     response_format: { type: "json_object" },
-    max_completion_tokens: 2000,
-    messages: [{ role: "user", content: prompt }],
+    max_completion_tokens: 4000,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
   });
 
   const raw = res.choices[0]?.message?.content ?? '{"fees":{}}';
@@ -156,7 +160,7 @@ async function upsertFees(
     if (isNaN(programId) || !programIdSet.has(programId)) continue;
     if (entry.domestic_fee == null && entry.international_fee == null) continue;
 
-    const academicYear = entry.academic_year || currentAcademicYear();
+    const academicYear = currentAcademicYear();
     const currency = entry.currency || "TRY";
 
     const values = {
