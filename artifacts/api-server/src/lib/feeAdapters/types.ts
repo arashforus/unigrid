@@ -3,7 +3,8 @@ export type FeeResult = {
   academic_year: string;
   domestic_fee: number | null;
   international_fee: number | null;
-  currency: "USD" | "EUR" | "TRY";
+  domestic_currency: "USD" | "EUR" | "TRY";
+  international_currency: "USD" | "EUR" | "TRY";
   source_url: string;
 };
 

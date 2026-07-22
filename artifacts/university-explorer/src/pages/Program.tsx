@@ -112,13 +112,13 @@ export default function ProgramDetail() {
                         <td className="px-6 py-4">
                           {fee.international_fee ? (
                             <span className="font-bold text-primary">
-                              {parseFloat(String(fee.international_fee)).toLocaleString()} {fee.currency} <span className="text-xs font-normal text-muted-foreground">{t('university.perYear')}</span>
+                              {parseFloat(String(fee.international_fee)).toLocaleString()} {fee.international_currency ?? fee.currency} <span className="text-xs font-normal text-muted-foreground">{t('university.perYear')}</span>
                             </span>
                           ) : '-'}
                         </td>
                         <td className="px-6 py-4 text-muted-foreground">
                           {fee.domestic_fee ? (
-                            <span>{parseFloat(String(fee.domestic_fee)).toLocaleString()} {fee.currency}</span>
+                            <span>{parseFloat(String(fee.domestic_fee)).toLocaleString()} {fee.domestic_currency ?? fee.currency}</span>
                           ) : '-'}
                         </td>
                       </tr>

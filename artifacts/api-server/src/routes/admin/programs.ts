@@ -17,7 +17,8 @@ const tuitionFeeInput = z
     academic_year: z.string().min(1),
     domestic_fee: z.union([z.string(), z.number()]).nullable().optional(),
     international_fee: z.union([z.string(), z.number()]).nullable().optional(),
-    currency: z.string().min(1).default("TRY"),
+    domestic_currency: z.string().min(1).default("TRY"),
+    international_currency: z.string().min(1).default("TRY"),
   })
   .nullable()
   .optional();
@@ -85,7 +86,9 @@ router.post("/programs", async (req, res) => {
         academic_year: tuition_fee.academic_year,
         domestic_fee: tuition_fee.domestic_fee != null ? String(tuition_fee.domestic_fee) : null,
         international_fee: tuition_fee.international_fee != null ? String(tuition_fee.international_fee) : null,
-        currency: tuition_fee.currency,
+        domestic_currency: tuition_fee.domestic_currency,
+        international_currency: tuition_fee.international_currency,
+        currency: tuition_fee.domestic_currency,
       });
     }
 
@@ -143,7 +146,9 @@ router.put("/programs/:id", async (req, res) => {
         academic_year: tuition_fee.academic_year,
         domestic_fee: tuition_fee.domestic_fee != null ? String(tuition_fee.domestic_fee) : null,
         international_fee: tuition_fee.international_fee != null ? String(tuition_fee.international_fee) : null,
-        currency: tuition_fee.currency,
+        domestic_currency: tuition_fee.domestic_currency,
+        international_currency: tuition_fee.international_currency,
+        currency: tuition_fee.domestic_currency,
       };
 
       if (existing) {

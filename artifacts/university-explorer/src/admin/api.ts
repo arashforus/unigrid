@@ -56,7 +56,8 @@ export type AdminTuitionFee = {
   academic_year: string;
   domestic_fee: string | null;
   international_fee: string | null;
-  currency: string;
+  domestic_currency: string;
+  international_currency: string;
 };
 
 export type AdminProgram = {
@@ -199,7 +200,8 @@ export type FoundFee = {
   academic_year: string;
   domestic_fee: string | null;
   international_fee: string | null;
-  currency: string;
+  domestic_currency: string;
+  international_currency: string;
 };
 
 export const adminApi = {

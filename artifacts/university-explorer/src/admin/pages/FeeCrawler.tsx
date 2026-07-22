@@ -236,10 +236,10 @@ function FeesModal({
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{f.academic_year}</td>
                       <td className="px-4 py-2.5 text-end font-mono text-green-400 whitespace-nowrap">
-                        {fmtFee(f.domestic_fee, f.currency)}
+                        {fmtFee(f.domestic_fee, f.domestic_currency)}
                       </td>
                       <td className="px-4 py-2.5 text-end font-mono text-primary whitespace-nowrap">
-                        {fmtFee(f.international_fee, f.currency)}
+                        {fmtFee(f.international_fee, f.international_currency)}
                       </td>
                     </tr>
                   ))

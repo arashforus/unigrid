@@ -74,7 +74,8 @@ type DBProgram = {
 type LLMFeeEntry = {
   domestic_fee: number | null;
   international_fee: number | null;
-  currency: string;
+  domestic_currency: string;
+  international_currency: string;
   academic_year?: string;
 };
 
@@ -121,21 +122,23 @@ Programme list (format: id | English name | Turkish name | degree | faculty):
 ${programLines}
 
 For each programme, provide:
-- domestic_fee: annual fee in TRY for Turkish/domestic students (integer, or null if truly unknown)
-- international_fee: annual fee in TRY for international/foreign students (integer, or null if truly unknown)
-- currency: "TRY" for Turkish Lira, "USD" or "EUR" only if the university officially uses those currencies
+- domestic_fee: annual fee for Turkish/domestic students (integer, or null if truly unknown)
+- domestic_currency: currency for the domestic fee — "TRY" for Turkish Lira, "USD" or "EUR" only if the university officially charges domestic students in that currency
+- international_fee: annual fee for international/foreign students (integer, or null if truly unknown)
+- international_currency: currency for the international fee — "TRY", "USD", or "EUR" depending on what the university officially charges international students
 
 Important:
 - ${universityName} is a real Turkish university — use your knowledge of its actual fee structure.
 - Private (vakıf) universities charge significant fees; state universities charge very low fees.
+- Many private universities charge international students in USD or EUR while domestic students pay in TRY.
 - Provide your best known estimate. Only use null if you have absolutely no basis for an estimate.
 - Use the exact programme id numbers as the JSON keys.
 
 Respond ONLY with this JSON structure, no markdown, no explanation:
 {
   "fees": {
-    "42": { "domestic_fee": 95000, "international_fee": 150000, "currency": "TRY" },
-    "43": { "domestic_fee": 3500, "international_fee": null, "currency": "TRY" }
+    "42": { "domestic_fee": 95000, "domestic_currency": "TRY", "international_fee": 15000, "international_currency": "USD" },
+    "43": { "domestic_fee": 3500, "domestic_currency": "TRY", "international_fee": null, "international_currency": "TRY" }
   }
 }`;
 
@@ -178,13 +181,17 @@ async function upsertFees(
     if (entry.domestic_fee == null && entry.international_fee == null) continue;
 
     const academicYear = currentAcademicYear();
-    const currency = entry.currency || "TRY";
+    const domestic_currency = entry.domestic_currency || "TRY";
+    const international_currency = entry.international_currency || "TRY";
 
     const values = {
       domestic_fee: entry.domestic_fee != null ? String(entry.domestic_fee) : null,
       international_fee:
         entry.international_fee != null ? String(entry.international_fee) : null,
-      currency,
+      domestic_currency,
+      international_currency,
+      // keep legacy column in sync with domestic for backward compat
+      currency: domestic_currency,
     };
 
     const [existing] = await db

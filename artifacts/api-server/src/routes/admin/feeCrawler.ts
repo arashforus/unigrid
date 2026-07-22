@@ -132,7 +132,8 @@ router.get("/fee-crawler/universities/:id/fees", async (req, res) => {
         academic_year: tuitionFeesTable.academic_year,
         domestic_fee: tuitionFeesTable.domestic_fee,
         international_fee: tuitionFeesTable.international_fee,
-        currency: tuitionFeesTable.currency,
+        domestic_currency: tuitionFeesTable.domestic_currency,
+        international_currency: tuitionFeesTable.international_currency,
       })
       .from(tuitionFeesTable)
       .innerJoin(programsTable, eq(tuitionFeesTable.program_id, programsTable.id))

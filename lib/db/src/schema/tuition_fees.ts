@@ -9,7 +9,10 @@ export const tuitionFeesTable = pgTable("tuition_fees", {
   academic_year: text("academic_year").notNull(), // e.g. '2024-2025'
   domestic_fee: numeric("domestic_fee"),
   international_fee: numeric("international_fee"),
+  /** @deprecated use domestic_currency / international_currency */
   currency: text("currency").notNull().default("TRY"),
+  domestic_currency: text("domestic_currency").notNull().default("TRY"),
+  international_currency: text("international_currency").notNull().default("TRY"),
 });
 
 export const insertTuitionFeeSchema = createInsertSchema(tuitionFeesTable).omit({ id: true });

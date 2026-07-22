@@ -17,7 +17,8 @@ type FormState = {
     academic_year: string;
     domestic_fee: string;
     international_fee: string;
-    currency: string;
+    domestic_currency: string;
+    international_currency: string;
   };
 };
 
@@ -29,7 +30,7 @@ const EMPTY_FORM: FormState = {
   language: 'English',
   duration_years: 4,
   is_active: true,
-  tuition_fee: { academic_year: '2024-2025', domestic_fee: '', international_fee: '', currency: 'TRY' },
+  tuition_fee: { academic_year: '2024-2025', domestic_fee: '', international_fee: '', domestic_currency: 'TRY', international_currency: 'TRY' },
 };
 
 export default function AdminCoursesPage() {
@@ -117,7 +118,8 @@ export default function AdminCoursesPage() {
         academic_year: fee?.academic_year ?? '2024-2025',
         domestic_fee: fee?.domestic_fee ?? '',
         international_fee: fee?.international_fee ?? '',
-        currency: fee?.currency ?? 'TRY',
+        domestic_currency: fee?.domestic_currency ?? 'TRY',
+        international_currency: fee?.international_currency ?? 'TRY',
       },
     });
     setError('');
@@ -246,9 +248,9 @@ export default function AdminCoursesPage() {
                       <td className="px-5 py-3.5 text-muted-foreground whitespace-nowrap">{p.language}</td>
                       <td className="px-5 py-3.5 text-muted-foreground whitespace-nowrap">
                         {fee?.international_fee
-                          ? `${parseFloat(fee.international_fee).toLocaleString()} ${fee.currency}`
+                          ? `${parseFloat(fee.international_fee).toLocaleString()} ${fee.international_currency}`
                           : fee?.domestic_fee
-                          ? `${parseFloat(fee.domestic_fee).toLocaleString()} ${fee.currency}`
+                          ? `${parseFloat(fee.domestic_fee).toLocaleString()} ${fee.domestic_currency}`
                           : '—'}
                       </td>
                       <td className="px-5 py-3.5 whitespace-nowrap">
@@ -412,20 +414,34 @@ export default function AdminCoursesPage() {
                 <h3 className="text-sm font-semibold mb-3">Tuition Fee</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Academic Year" value={form.tuition_fee.academic_year} onChange={(v) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, academic_year: v } }))} required />
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">Currency</label>
-                    <select
-                      value={form.tuition_fee.currency}
-                      onChange={(e) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, currency: e.target.value } }))}
-                      className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                      <option value="TRY">TRY</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                    </select>
+                  <div className="col-span-2 grid grid-cols-2 gap-4">
+                    <div>
+                      <Field label="Domestic Fee" value={form.tuition_fee.domestic_fee} onChange={(v) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, domestic_fee: v } }))} />
+                      <label className="block text-sm font-medium mt-2 mb-1.5">Domestic Currency</label>
+                      <select
+                        value={form.tuition_fee.domestic_currency}
+                        onChange={(e) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, domestic_currency: e.target.value } }))}
+                        className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      >
+                        <option value="TRY">TRY</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Field label="International Fee" value={form.tuition_fee.international_fee} onChange={(v) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, international_fee: v } }))} />
+                      <label className="block text-sm font-medium mt-2 mb-1.5">International Currency</label>
+                      <select
+                        value={form.tuition_fee.international_currency}
+                        onChange={(e) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, international_currency: e.target.value } }))}
+                        className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      >
+                        <option value="TRY">TRY</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                      </select>
+                    </div>
                   </div>
-                  <Field label="Domestic Fee" value={form.tuition_fee.domestic_fee} onChange={(v) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, domestic_fee: v } }))} />
-                  <Field label="International Fee" value={form.tuition_fee.international_fee} onChange={(v) => setForm((f) => ({ ...f, tuition_fee: { ...f.tuition_fee, international_fee: v } }))} />
                 </div>
               </div>
 

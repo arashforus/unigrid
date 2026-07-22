@@ -44,7 +44,8 @@ export const bilkentFeeAdapter: UniversityFeeAdapter = {
       academic_year: academicYear,
       domestic_fee: null,
       international_fee: best.amount,
-      currency: "USD",
+      domestic_currency: "TRY",
+      international_currency: "USD",
       source_url: SOURCE_URL,
     };
   },

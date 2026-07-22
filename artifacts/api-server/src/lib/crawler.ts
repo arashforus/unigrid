@@ -395,7 +395,7 @@ async function upsertProgram(
 
 async function applyFeeToUniversity(
   universityId: number,
-  fee: { academic_year: string; domestic_fee: number | null; international_fee: number | null; currency: string },
+  fee: { academic_year: string; domestic_fee: number | null; international_fee: number | null; domestic_currency: string; international_currency: string },
 ): Promise<number> {
   const rows = await db
     .select({ programId: programsTable.id })
@@ -414,7 +414,9 @@ async function applyFeeToUniversity(
     const values = {
       domestic_fee: fee.domestic_fee != null ? String(fee.domestic_fee) : null,
       international_fee: fee.international_fee != null ? String(fee.international_fee) : null,
-      currency: fee.currency,
+      domestic_currency: fee.domestic_currency,
+      international_currency: fee.international_currency,
+      currency: fee.domestic_currency, // legacy column kept in sync
     };
 
     if (existing) {

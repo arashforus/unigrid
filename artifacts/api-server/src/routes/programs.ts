@@ -272,7 +272,8 @@ function buildExtras(
       academic_year: f.academic_year,
       domestic_fee: f.domestic_fee,
       international_fee: f.international_fee,
-      currency: f.currency,
+      domestic_currency: f.domestic_currency,
+      international_currency: f.international_currency,
     })),
   };
 }
@@ -342,7 +343,8 @@ router.get("/programs/detail", async (req, res) => {
           academic_year: f.academic_year,
           domestic_fee: f.domestic_fee,
           international_fee: f.international_fee,
-          currency: f.currency,
+          domestic_currency: f.domestic_currency,
+          international_currency: f.international_currency,
         })),
       }),
     );
@@ -376,7 +378,8 @@ router.get("/tuition-fees", async (req, res) => {
         academic_year: f.academic_year,
         domestic_fee: f.domestic_fee,
         international_fee: f.international_fee,
-        currency: f.currency,
+        domestic_currency: f.domestic_currency,
+        international_currency: f.international_currency,
       })),
     );
   } catch (err) {
