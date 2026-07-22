@@ -10,7 +10,8 @@ A premium multilingual web platform for international students to discover, comp
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — auto-provided by Replit's built-in PostgreSQL (no setup needed)
+- Optional env: `OPENAI_API_KEY` — needed for AI-powered university crawling in the admin panel
 
 ## Stack
 
