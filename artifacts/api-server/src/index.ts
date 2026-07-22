@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureDatabase } from "@workspace/db/setup";
+import path from "path";
 
 const rawPort = process.env["PORT"];
 
@@ -16,7 +17,12 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-ensureDatabase()
+// __dirname is injected by the esbuild banner and always points to the
+// directory of the compiled entry file (dist/).  build.mjs copies
+// lib/db/migrations → dist/migrations so the migrator can find the SQL files.
+const migrationsFolder = path.join(__dirname, "migrations");
+
+ensureDatabase({ migrationsFolder })
   .then(() => {
     app.listen(port, (err) => {
       if (err) {

@@ -1,11 +1,19 @@
 /**
- * Auto-setup: pushes the Drizzle schema and seeds the database if it is empty.
- * Called once on API server startup so the app works out-of-the-box on a fresh
- * Replit environment without manual migration or seed steps.
+ * Database startup routine.
+ *
+ * Runs pending Drizzle migrations, seeds if empty, creates the default
+ * admin user.  The caller must supply the absolute path to the migrations
+ * folder because the build system copies SQL files to a location that
+ * varies between development and production.
+ *
+ * Workflow for schema changes:
+ *   1. Edit a file under lib/db/src/schema/
+ *   2. pnpm --filter @workspace/db run generate   ← creates a new .sql file
+ *   3. Commit both the schema change and the migration file
+ *   4. On next deploy, ensureDatabase() runs the new migration automatically
  */
 
-import { execSync } from "child_process";
-import { resolve } from "path";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 import bcrypt from "bcryptjs";
 import { seed } from "./seed";
@@ -33,30 +41,23 @@ async function rowCount(pool: pg.Pool, table: string): Promise<number> {
   return parseInt(rows[0]?.count ?? "0", 10);
 }
 
-export async function ensureDatabase(): Promise<void> {
+export async function ensureDatabase(opts: {
+  migrationsFolder: string;
+}): Promise<void> {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL must be set before calling ensureDatabase");
   }
 
+  // ── 1. Run pending migrations ─────────────────────────────────────────
+  console.log(`[db] Running migrations from: ${opts.migrationsFolder}`);
+  await migrate(db, { migrationsFolder: opts.migrationsFolder });
+  console.log("[db] Migrations up to date.");
+
   const pool = new Pool({ connectionString });
 
   try {
-    const hasSchema = await tableExists(pool, "universities");
-
-    if (!hasSchema) {
-      console.log("[db] Schema not found — running drizzle-kit push…");
-      // Workspace root is two levels above artifacts/api-server (the process cwd)
-      const workspaceRoot = resolve(process.cwd(), "../..");
-      execSync("pnpm --filter @workspace/db run push-force", {
-        stdio: "inherit",
-        cwd: workspaceRoot,
-        env: { ...process.env },
-      });
-      console.log("[db] Schema pushed.");
-    }
-
-    // Ensure the connect-pg-simple session table exists (not managed by Drizzle)
+    // ── 2. Session table (not managed by Drizzle) ─────────────────────
     const hasSession = await tableExists(pool, "session");
     if (!hasSession) {
       await pool.query(`
@@ -71,12 +72,14 @@ export async function ensureDatabase(): Promise<void> {
       console.log("[db] Session table created.");
     }
 
+    // ── 3. Seed if the database is empty ──────────────────────────────
     const count = await rowCount(pool, "universities");
     if (count === 0) {
       console.log("[db] No data found — seeding…");
       await seed();
     }
 
+    // ── 4. Ensure default admin user ──────────────────────────────────
     await ensureAdminUser();
   } finally {
     await pool.end();
@@ -94,7 +97,7 @@ async function ensureAdminUser(): Promise<void> {
     .where(eq(usersTable.email, adminEmail))
     .limit(1);
 
-  if (existing.length > 0) return; // already exists
+  if (existing.length > 0) return;
 
   const password_hash = await bcrypt.hash(adminPassword, 12);
   await db.insert(usersTable).values({
