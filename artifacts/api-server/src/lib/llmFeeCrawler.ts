@@ -124,7 +124,7 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
 }`;
 
   const res = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.5-preview",
     response_format: { type: "json_object" },
     max_completion_tokens: 4000,
     messages: [
