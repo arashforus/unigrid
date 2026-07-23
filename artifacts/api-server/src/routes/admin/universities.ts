@@ -102,6 +102,49 @@ router.put("/universities/:id", async (req, res) => {
   }
 });
 
+/**
+ * Fetch the latest QS rankings for a university using OpenAI's web search.
+ * Returns null values if the search fails or rankings are not found.
+ */
+async function fetchLiveQSRankings(
+  client: OpenAI,
+  nameEn: string,
+  nameTr: string,
+): Promise<{ rank_turkey: number | null; rank_world: number | null }> {
+  try {
+    const response = await (client as any).responses.create({
+      model: "gpt-4o-mini-search-preview",
+      tools: [{ type: "web_search_preview" }],
+      input: `Search the web for the most recent QS World University Rankings for "${nameEn}" (Turkish name: "${nameTr}"), a university in Turkey.
+
+Find:
+1. Its current QS World University Ranking (global position, e.g. 401-450 or 523)
+2. Its current QS ranking among Turkish universities only (e.g. 3rd in Turkey)
+
+Look specifically at topuniversities.com or the official QS rankings website for the 2024 or 2025 edition.
+
+Reply ONLY with a JSON object and nothing else:
+{"rank_world": <integer or null>, "rank_turkey": <integer or null>}
+
+Use the midpoint if a band is given (e.g. "401-450" → 425). Use null if not found in the rankings.`,
+    });
+
+    const text: string = response.output_text ?? "";
+    // Extract JSON from the response (may have surrounding text)
+    const match = text.match(/\{[^{}]*"rank_world"[^{}]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]) as { rank_world?: unknown; rank_turkey?: unknown };
+      return {
+        rank_world: typeof parsed.rank_world === "number" ? Math.round(parsed.rank_world) : null,
+        rank_turkey: typeof parsed.rank_turkey === "number" ? Math.round(parsed.rank_turkey) : null,
+      };
+    }
+  } catch (_err) {
+    // Non-fatal — fall through and let the main prompt handle rankings
+  }
+  return { rank_world: null, rank_turkey: null };
+}
+
 // POST /admin/universities/:id/ai-enrich  — ask AI for rich university data
 router.post("/universities/:id/ai-enrich", async (req, res) => {
   const id = Number(req.params.id);
@@ -130,12 +173,24 @@ router.post("/universities/:id/ai-enrich", async (req, res) => {
   try {
     const client = new OpenAI({ apiKey });
 
+    // Step 1: fetch live QS rankings via web search so we always use current data
+    const liveRankings = await fetchLiveQSRankings(client, university.name_en, university.name_tr ?? "");
+
+    const rankingsContext = liveRankings.rank_world !== null || liveRankings.rank_turkey !== null
+      ? `VERIFIED LIVE QS RANKINGS (use these exact values — do not substitute your own):
+  - QS World Ranking: ${liveRankings.rank_world ?? "not in top rankings"}
+  - QS Turkey Ranking: ${liveRankings.rank_turkey ?? "not found"}
+`
+      : `QS rankings could not be fetched in real time. Use your best knowledge for rank_turkey and rank_world, or set them to null if uncertain.`;
+
     const prompt = `You are a factual research assistant with deep knowledge of Turkish universities.
 Provide comprehensive, accurate information about the following university.
 
 University: "${university.name_en}" (Turkish: "${university.name_tr}")
 City: ${university.city_en}, Turkey
 Slug: ${university.slug}
+
+${rankingsContext}
 
 Return a single JSON object with EXACTLY these fields (no extra fields):
 {
@@ -146,14 +201,14 @@ Return a single JSON object with EXACTLY these fields (no extra fields):
   "description_ar": "نفس المحتوى باللغة العربية، حوالي ٣٠٠٠ حرف",
   "latitude": <campus center latitude as a number, e.g. 41.0833>,
   "longitude": <campus center longitude as a number, e.g. 29.05>,
-  "rank_turkey": <QS ranking within Turkey as integer, or null if unranked>,
-  "rank_world": <QS world ranking as integer, or null if outside top 1000>,
+  "rank_turkey": <QS ranking within Turkey as integer — use the VERIFIED value above if provided>,
+  "rank_world": <QS world ranking as integer — use the VERIFIED value above if provided>,
   "students_total": <total enrolled students as integer, or null if unknown>,
   "students_international": <international students as integer, or null if unknown>,
   "established_year": <founding year as integer, or null if unknown>
 }
 
-Be factual and precise. Use the most recent QS rankings available. For rankings, use integers only.
+Be factual and precise. For rankings, use integers only.
 Descriptions must be rich, engaging prose — not bullet points.`;
 
     const completion = await client.chat.completions.create({
