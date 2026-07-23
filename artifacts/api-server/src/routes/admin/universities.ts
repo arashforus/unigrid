@@ -182,7 +182,6 @@ Be factual and precise. Use integers only for all numeric fields. Descriptions m
         },
       ],
       max_completion_tokens: 8000,
-      temperature: 0.3,
     });
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
@@ -252,7 +251,6 @@ Reply with a JSON object: { "url": "https://..." } — the URL must be the real 
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 100,
-      temperature: 0,
     });
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
