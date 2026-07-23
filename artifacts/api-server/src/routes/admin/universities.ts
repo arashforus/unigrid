@@ -4,6 +4,8 @@ import { universitiesTable, facultiesTable, settingsTable, insertUniversitySchem
 import { eq } from "drizzle-orm";
 import OpenAI from "openai";
 
+const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
+
 /** Resolve the OpenAI API key: DB setting takes priority, then env var. */
 async function resolveOpenAIKey(): Promise<string | null> {
   const [row] = await db
@@ -12,6 +14,20 @@ async function resolveOpenAIKey(): Promise<string | null> {
     .where(eq(settingsTable.key, "openai_api_key"))
     .limit(1);
   return row?.value || process.env.OPENAI_API_KEY || null;
+}
+
+/** Resolve the configured OpenAI model from DB settings, with fallback. */
+async function resolveOpenAIModel(): Promise<string> {
+  try {
+    const [row] = await db
+      .select({ value: settingsTable.value })
+      .from(settingsTable)
+      .where(eq(settingsTable.key, "openai_model"))
+      .limit(1);
+    return row?.value?.trim() || DEFAULT_OPENAI_MODEL;
+  } catch {
+    return DEFAULT_OPENAI_MODEL;
+  }
 }
 
 const router = Router();
@@ -173,8 +189,11 @@ router.post("/universities/:id/ai-enrich", async (req, res) => {
   try {
     const client = new OpenAI({ apiKey });
 
-    // Step 1: fetch live QS rankings via web search so we always use current data
-    const liveRankings = await fetchLiveQSRankings(client, university.name_en, university.name_tr ?? "");
+    // Step 1: resolve configured model and fetch live QS rankings in parallel
+    const [model, liveRankings] = await Promise.all([
+      resolveOpenAIModel(),
+      fetchLiveQSRankings(client, university.name_en, university.name_tr ?? ""),
+    ]);
 
     const rankingsContext = liveRankings.rank_world !== null || liveRankings.rank_turkey !== null
       ? `VERIFIED LIVE QS RANKINGS (use these exact values — do not substitute your own):
@@ -212,7 +231,7 @@ Be factual and precise. For rankings, use integers only.
 Descriptions must be rich, engaging prose — not bullet points.`;
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "You are a factual assistant. Return only valid JSON with accurate university data." },
@@ -267,19 +286,19 @@ router.post("/universities/:id/find-url", async (req, res) => {
     return;
   }
 
-  const apiKey = process.env["OPENAI_API_KEY"];
+  const apiKey = await resolveOpenAIKey();
   if (!apiKey) {
-    res.status(503).json({ error: "OpenAI API key not configured" });
+    res.status(503).json({ error: "OpenAI API key not configured. Add it in Admin → Settings → API Keys." });
     return;
   }
 
   try {
-    const client = new OpenAI({ apiKey });
+    const [client, model] = [new OpenAI({ apiKey }), await resolveOpenAIModel()];
     const prompt = `What is the official website URL for "${university.name_en}" (also known as "${university.name_tr}"), located in ${university.city_en}, Turkey?
 Reply with a JSON object: { "url": "https://..." } — the URL must be the real homepage, starting with https://. If you don't know it with confidence, reply { "url": null }.`;
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model,
       response_format: { type: "json_object" },
       messages: [
         {
