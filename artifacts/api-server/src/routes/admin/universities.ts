@@ -118,17 +118,6 @@ router.put("/universities/:id", async (req, res) => {
   }
 });
 
-/**
- * Map any configured OpenAI model to a web-search-capable variant.
- * The Responses API web_search_preview tool only works with search-preview models.
- */
-function toSearchModel(model: string): string {
-  if (model.startsWith("gpt-4o-mini")) return "gpt-4o-mini-search-preview";
-  if (model.startsWith("gpt-4o")) return "gpt-4o-search-preview";
-  // gpt-4.1, gpt-4.1-mini, o-series, etc. → fall back to mini search preview
-  return "gpt-4o-mini-search-preview";
-}
-
 // POST /admin/universities/:id/ai-enrich  — single AI request for all university data
 router.post("/universities/:id/ai-enrich", async (req, res) => {
   const id = Number(req.params.id);
@@ -155,47 +144,49 @@ router.post("/universities/:id/ai-enrich", async (req, res) => {
   }
 
   try {
-    const client = new OpenAI({ apiKey });
-    const configuredModel = await resolveOpenAIModel();
-    const searchModel = toSearchModel(configuredModel);
+    const [client, model] = [new OpenAI({ apiKey }), await resolveOpenAIModel()];
 
-    // Single request: web_search_preview lets the model look up live QS rankings
-    // and compose all enrichment fields in one shot.
-    const response = await (client as any).responses.create({
-      model: searchModel,
-      tools: [{ type: "web_search_preview" }],
-      input: `You are a factual research assistant. Search the web and then return comprehensive data about the following Turkish university.
+    const completion = await client.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: "You are a factual research assistant with deep knowledge of Turkish universities. Return only valid JSON.",
+        },
+        {
+          role: "user",
+          content: `Provide comprehensive, accurate information about the following Turkish university.
 
 University: "${university.name_en}" (Turkish: "${university.name_tr}")
 City: ${university.city_en}, Turkey
+Slug: ${university.slug}
 
-IMPORTANT: Search topuniversities.com for the most recent QS World University Rankings (2025 or latest available) to find:
-- The university's global QS world rank
-- Its rank among Turkish universities specifically
-
-Then return a single JSON object with EXACTLY these fields (no markdown, no extra text — only the JSON object):
+Return a single JSON object with EXACTLY these fields (no extra fields):
 {
   "logo_url": "Direct URL to the official university logo image from the university's own website, or null if not confident",
   "description_en": "Detailed English description ~3000 characters: history, academic strengths, faculties, campus life, international programs, notable achievements",
   "description_tr": "Aynı içeriğin Türkçe versiyonu, ~3000 karakter",
   "description_fa": "همان محتوا به فارسی، حدود ۳۰۰۰ کاراکتر",
   "description_ar": "نفس المحتوى باللغة العربية، حوالي ٣٠٠٠ حرف",
-  "latitude": <campus center latitude as a number>,
-  "longitude": <campus center longitude as a number>,
-  "rank_turkey": <QS rank within Turkey as integer from your web search, or null if unranked>,
-  "rank_world": <QS world rank as integer from your web search, or null if outside top rankings>,
-  "students_total": <total enrolled students as integer, or null>,
-  "students_international": <international students as integer, or null>,
-  "established_year": <founding year as integer, or null>
+  "latitude": <campus center latitude as a number, e.g. 41.0833>,
+  "longitude": <campus center longitude as a number, e.g. 29.05>,
+  "rank_turkey": <most recent QS ranking within Turkey as integer, or null if unranked>,
+  "rank_world": <most recent QS world ranking as integer, or null if outside top rankings — use midpoint if given as a band e.g. "401-450" → 425>,
+  "students_total": <total enrolled students as integer, or null if unknown>,
+  "students_international": <international students as integer, or null if unknown>,
+  "established_year": <founding year as integer, or null if unknown>
 }
 
-Use integers only for all numeric fields. Descriptions must be rich prose, not bullet points. If a QS ranking is given as a band (e.g. "401-450"), use the midpoint (425).`,
+Be factual and precise. Use integers only for all numeric fields. Descriptions must be rich engaging prose — not bullet points.`,
+        },
+      ],
+      max_tokens: 8000,
+      temperature: 0.3,
     });
 
-    // Responses API returns output_text; extract the JSON object from it
-    const outputText: string = response.output_text ?? "{}";
-    const jsonMatch = outputText.match(/\{[\s\S]*\}/);
-    const data = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const data = JSON.parse(raw);
 
     // Sanitise types before returning
     const result = {
