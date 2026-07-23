@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { useSearch } from 'wouter';
 import { useGetUniversity, getGetUniversityQueryKey } from '@workspace/api-client-react';
-import { MapPin, Globe, ExternalLink, GraduationCap, Building2, BookOpen, HeartHandshake } from 'lucide-react';
+import { MapPin, Globe, ExternalLink, GraduationCap, Building2, BookOpen, HeartHandshake, Calendar, Trophy, Users, Map } from 'lucide-react';
 import { Link } from 'wouter';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
 import { ArrowLeft } from 'lucide-react';
@@ -38,6 +38,17 @@ export default function UniversityDetail() {
     </div>
   );
 
+  const hasStats = uni.established_year || uni.rank_turkey || uni.rank_world || uni.students_total || uni.students_international || uni.campus_size_ha;
+  const hasMap = uni.latitude != null && uni.longitude != null;
+
+  const mapUrl = hasMap
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${uni.longitude! - 0.015},${uni.latitude! - 0.010},${uni.longitude! + 0.015},${uni.latitude! + 0.010}&layer=mapnik&marker=${uni.latitude},${uni.longitude}`
+    : null;
+
+  const mapLinkUrl = hasMap
+    ? `https://www.openstreetmap.org/?mlat=${uni.latitude}&mlon=${uni.longitude}#map=15/${uni.latitude}/${uni.longitude}`
+    : null;
+
   return (
     <div className="min-h-[100dvh] pt-16 bg-background">
       {/* Hero Header */}
@@ -68,6 +79,12 @@ export default function UniversityDetail() {
                   <MapPin className="w-4 h-4" />
                   {uni.city}
                 </div>
+                {uni.established_year && (
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground px-3 py-1 rounded-full bg-secondary">
+                    <Calendar className="w-4 h-4" />
+                    {t('university.established')} {uni.established_year}
+                  </div>
+                )}
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">{uni.name}</h1>
@@ -92,6 +109,58 @@ export default function UniversityDetail() {
               </div>
             </div>
           </div>
+
+          {/* Stats Bar */}
+          {hasStats && (
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {uni.rank_turkey != null && (
+                <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                    {t('university.rankTurkey')}
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">#{uni.rank_turkey}</div>
+                </div>
+              )}
+              {uni.rank_world != null && (
+                <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <Globe className="w-3.5 h-3.5 text-blue-400" />
+                    {t('university.rankWorld')}
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">#{uni.rank_world}</div>
+                  <div className="text-[10px] text-muted-foreground/60">QS</div>
+                </div>
+              )}
+              {uni.students_total != null && (
+                <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <Users className="w-3.5 h-3.5 text-green-400" />
+                    {t('university.totalStudents')}
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{uni.students_total.toLocaleString()}</div>
+                </div>
+              )}
+              {uni.students_international != null && (
+                <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <Globe className="w-3.5 h-3.5 text-purple-400" />
+                    {t('university.intlStudents')}
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{uni.students_international.toLocaleString()}</div>
+                </div>
+              )}
+              {uni.campus_size_ha != null && (
+                <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <Map className="w-3.5 h-3.5 text-orange-400" />
+                    {t('university.campusSize')}
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{uni.campus_size_ha} <span className="text-sm font-normal text-muted-foreground">{t('university.campusSizeUnit')}</span></div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -116,11 +185,43 @@ export default function UniversityDetail() {
 
         {/* Content */}
         {activeTab === 'about' && (
-          <div className="prose prose-invert prose-p:text-muted-foreground prose-h2:text-foreground max-w-none">
-            {uni.description ? (
-              <p className="text-muted-foreground leading-relaxed">{uni.description}</p>
-            ) : (
-              <p className="text-muted-foreground italic">No description available for this university.</p>
+          <div className="space-y-8">
+            {/* Description */}
+            <div className="prose prose-invert prose-p:text-muted-foreground prose-h2:text-foreground max-w-none">
+              {uni.description ? (
+                <p className="text-muted-foreground leading-relaxed text-base">{uni.description}</p>
+              ) : (
+                <p className="text-muted-foreground italic">No description available for this university.</p>
+              )}
+            </div>
+
+            {/* Map */}
+            {mapUrl && (
+              <div>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <div className="w-2 h-5 bg-primary rounded-full"></div>
+                  {t('university.viewOnMap')}
+                </h2>
+                <div className="relative rounded-2xl overflow-hidden border border-border shadow-lg">
+                  <iframe
+                    src={mapUrl}
+                    title={`${uni.name} campus map`}
+                    className="w-full h-72 md:h-96"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <a
+                    href={mapLinkUrl ?? '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-3 end-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card/90 backdrop-blur-sm border border-border text-xs font-medium hover:bg-card transition-colors"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    OpenStreetMap
+                  </a>
+                </div>
+              </div>
             )}
           </div>
         )}

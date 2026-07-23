@@ -38,7 +38,15 @@ export const ListUniversitiesResponseItem = zod.object({
   "logo_url": zod.string().nullable(),
   "website_url": zod.string().nullable(),
   "apply_url_international": zod.string().nullish(),
-  "description": zod.string().nullish().describe('Localized description')
+  "description": zod.string().nullish().describe('Localized description'),
+  "established_year": zod.number().nullish().describe('Year the university was founded'),
+  "latitude": zod.number().nullish().describe('Campus latitude for map display'),
+  "longitude": zod.number().nullish().describe('Campus longitude for map display'),
+  "rank_turkey": zod.number().nullish().describe('QS ranking within Turkey'),
+  "rank_world": zod.number().nullish().describe('QS world ranking'),
+  "students_total": zod.number().nullish().describe('Total enrolled students'),
+  "students_international": zod.number().nullish().describe('International students enrolled'),
+  "campus_size_ha": zod.number().nullish().describe('Campus area in hectares')
 })
 export const ListUniversitiesResponse = zod.array(ListUniversitiesResponseItem)
 
@@ -62,7 +70,15 @@ export const GetUniversityResponse = zod.object({
   "logo_url": zod.string().nullable(),
   "website_url": zod.string().nullable(),
   "apply_url_international": zod.string().nullish(),
-  "description": zod.string().nullish().describe('Localized description')
+  "description": zod.string().nullish().describe('Localized description'),
+  "established_year": zod.number().nullish().describe('Year the university was founded'),
+  "latitude": zod.number().nullish().describe('Campus latitude for map display'),
+  "longitude": zod.number().nullish().describe('Campus longitude for map display'),
+  "rank_turkey": zod.number().nullish().describe('QS ranking within Turkey'),
+  "rank_world": zod.number().nullish().describe('QS world ranking'),
+  "students_total": zod.number().nullish().describe('Total enrolled students'),
+  "students_international": zod.number().nullish().describe('International students enrolled'),
+  "campus_size_ha": zod.number().nullish().describe('Campus area in hectares')
 }).and(zod.object({
   "faculties": zod.array(zod.object({
   "id": zod.number(),
@@ -116,9 +132,7 @@ export const ListProgramsQueryParams = zod.object({
   "max_fee": zod.coerce.number().optional(),
   "search": zod.coerce.string().optional(),
   "lang": zod.enum(['en', 'tr', 'fa', 'ar']).default(listProgramsQueryLangDefault),
-  "is_active": zod.coerce.boolean().optional(),
-  "page": zod.coerce.number().int().min(1).default(1),
-  "limit": zod.coerce.number().int().min(1).max(100).default(24)
+  "is_active": zod.coerce.boolean().optional()
 })
 
 export const ListProgramsResponseItem = zod.object({

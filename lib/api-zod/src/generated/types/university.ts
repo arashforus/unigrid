@@ -26,4 +26,44 @@ export interface University {
      * @nullable
      */
   description?: string | null;
+  /**
+     * Year the university was founded
+     * @nullable
+     */
+  established_year?: number | null;
+  /**
+     * Campus latitude for map display
+     * @nullable
+     */
+  latitude?: number | null;
+  /**
+     * Campus longitude for map display
+     * @nullable
+     */
+  longitude?: number | null;
+  /**
+     * QS ranking within Turkey
+     * @nullable
+     */
+  rank_turkey?: number | null;
+  /**
+     * QS world ranking
+     * @nullable
+     */
+  rank_world?: number | null;
+  /**
+     * Total enrolled students
+     * @nullable
+     */
+  students_total?: number | null;
+  /**
+     * International students enrolled
+     * @nullable
+     */
+  students_international?: number | null;
+  /**
+     * Campus area in hectares
+     * @nullable
+     */
+  campus_size_ha?: number | null;
 }

@@ -328,6 +328,30 @@ components:
         description:
           type: ["string", "null"]
           description: Localized description
+        established_year:
+          type: ["integer", "null"]
+          description: Year the university was founded
+        latitude:
+          type: ["number", "null"]
+          description: Campus latitude for map display
+        longitude:
+          type: ["number", "null"]
+          description: Campus longitude for map display
+        rank_turkey:
+          type: ["integer", "null"]
+          description: QS ranking within Turkey
+        rank_world:
+          type: ["integer", "null"]
+          description: QS world ranking
+        students_total:
+          type: ["integer", "null"]
+          description: Total enrolled students
+        students_international:
+          type: ["integer", "null"]
+          description: International students enrolled
+        campus_size_ha:
+          type: ["integer", "null"]
+          description: Campus area in hectares
 
     UniversityDetail:
       allOf:

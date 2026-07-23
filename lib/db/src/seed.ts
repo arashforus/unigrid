@@ -47,6 +47,14 @@ async function seed() {
         description_ar:
           "جامعة بوغازيتشي هي جامعة بحثية عامة رائدة في تركيا تقع على الضفة الأوروبية لمضيق البوسفور في إسطنبول.",
         yok_universite_id: 1010,
+        established_year: 1863,
+        latitude: 41.0833,
+        longitude: 29.0500,
+        rank_turkey: 4,
+        rank_world: 601,
+        students_total: 17000,
+        students_international: 500,
+        campus_size_ha: 54,
       },
       {
         name_en: "Istanbul Technical University",
@@ -69,6 +77,14 @@ async function seed() {
         description_ar:
           "جامعة إسطنبول التقنية (ITU) هي واحدة من أقدم الجامعات التقنية في العالم، تأسست عام 1773.",
         yok_universite_id: 1020,
+        established_year: 1773,
+        latitude: 41.1040,
+        longitude: 29.0220,
+        rank_turkey: 5,
+        rank_world: 651,
+        students_total: 37000,
+        students_international: 2000,
+        campus_size_ha: 20,
       },
       {
         name_en: "Koç University",
@@ -91,6 +107,14 @@ async function seed() {
         description_ar:
           "جامعة كوتش هي جامعة بحثية خاصة رائدة في إسطنبول، تأسست عام 1993.",
         yok_universite_id: 2001,
+        established_year: 1993,
+        latitude: 41.2010,
+        longitude: 29.0778,
+        rank_turkey: 1,
+        rank_world: 479,
+        students_total: 7500,
+        students_international: 900,
+        campus_size_ha: 67,
       },
       {
         name_en: "Sabancı University",
@@ -109,10 +133,18 @@ async function seed() {
         description_tr:
           "Sabancı Üniversitesi, 1996 yılında kurulan, disiplinlerarası yaklaşımıyla öne çıkan İngilizce eğitim veren vakıf üniversitesidir.",
         description_fa:
-          "دانشگاه صابانجی یک دانشگاه خصوصی پژوهشی در نزدیکی استانبول است که در سال ۱۹۹۶ تأسیس شده است.",
+          "دانشگاه صابانجی یک دانشگاه خصوهشی پژوهشی در نزدیکی استانبول است که در سال ۱۹۹۶ تأسیس شده است.",
         description_ar:
           "جامعة صاباندجي هي جامعة بحثية خاصة قرب إسطنبول، تأسست عام 1996.",
         yok_universite_id: 2002,
+        established_year: 1996,
+        latitude: 40.8903,
+        longitude: 29.3764,
+        rank_turkey: 2,
+        rank_world: 574,
+        students_total: 11000,
+        students_international: 700,
+        campus_size_ha: 100,
       },
       {
         name_en: "Bilkent University",
@@ -135,6 +167,14 @@ async function seed() {
         description_ar:
           "جامعة بيلكنت هي أول جامعة خاصة في تركيا، تأسست عام 1984 في أنقرة.",
         yok_universite_id: 2003,
+        established_year: 1984,
+        latitude: 39.8678,
+        longitude: 32.7483,
+        rank_turkey: 3,
+        rank_world: 338,
+        students_total: 13000,
+        students_international: 1200,
+        campus_size_ha: 160,
       },
     ])
     .returning();

@@ -22,6 +22,14 @@ function localizeUniversity(u: typeof universitiesTable.$inferSelect, lang: Lang
     website_url: u.website_url,
     apply_url_international: u.apply_url_international,
     description: u[`description_${lang}` as const] ?? u.description_en,
+    established_year: u.established_year,
+    latitude: u.latitude,
+    longitude: u.longitude,
+    rank_turkey: u.rank_turkey,
+    rank_world: u.rank_world,
+    students_total: u.students_total,
+    students_international: u.students_international,
+    campus_size_ha: u.campus_size_ha,
   };
 }
 
