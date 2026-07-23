@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, type AdminUniversity } from '@/admin/api';
+import { adminApi, type AdminUniversity, type AIEnrichResult } from '@/admin/api';
 import {
   Loader2, Plus, Pencil, Trash2, X, ExternalLink,
-  Search, ChevronLeft, ChevronRight, Filter,
+  Search, ChevronLeft, ChevronRight, Filter, Sparkles,
+  Check, AlertCircle, MapPin, Trophy, Globe, Users, GraduationCap, Calendar,
 } from 'lucide-react';
 
 const PAGE_SIZE = 10;
@@ -22,6 +23,308 @@ function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+// ── AI Enrich Modal ───────────────────────────────────────────────────────────
+
+type AIEnrichState =
+  | { phase: 'idle' }
+  | { phase: 'loading' }
+  | { phase: 'error'; message: string }
+  | { phase: 'preview'; university: AdminUniversity; data: AIEnrichResult };
+
+function AIEnrichModal({
+  state,
+  onClose,
+  onApply,
+}: {
+  state: AIEnrichState;
+  onClose: () => void;
+  onApply: (data: AIEnrichResult) => void;
+}) {
+  const [draft, setDraft] = useState<AIEnrichResult | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'descriptions'>('overview');
+
+  // Initialise draft when preview data arrives
+  const data = state.phase === 'preview' ? (draft ?? state.data) : null;
+
+  function updateDraft(patch: Partial<AIEnrichResult>) {
+    setDraft((d) => ({ ...(d ?? (state.phase === 'preview' ? state.data : {})), ...patch } as AIEnrichResult));
+  }
+
+  async function handleApply() {
+    if (!data) return;
+    setSaving(true);
+    try {
+      await onApply(data);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (state.phase === 'idle') return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="font-bold text-base leading-none">AI Enrichment</h2>
+              {state.phase === 'preview' && (
+                <p className="text-xs text-muted-foreground mt-0.5">{state.university.name_en}</p>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Loading */}
+          {state.phase === 'loading' && (
+            <div className="flex flex-col items-center justify-center gap-4 py-20">
+              <div className="w-14 h-14 rounded-2xl bg-violet-500/10 flex items-center justify-center">
+                <Sparkles className="w-7 h-7 text-violet-400 animate-pulse" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold">Fetching data from AI…</p>
+                <p className="text-sm text-muted-foreground mt-1">Generating descriptions in 4 languages, rankings, coordinates, and more</p>
+              </div>
+              <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
+            </div>
+          )}
+
+          {/* Error */}
+          {state.phase === 'error' && (
+            <div className="p-6">
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-destructive text-sm">Enrichment failed</p>
+                  <p className="text-sm text-muted-foreground mt-1">{state.message}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Preview */}
+          {state.phase === 'preview' && data && (
+            <div className="p-6 space-y-5">
+              {/* Tabs */}
+              <div className="flex gap-1 bg-secondary/50 p-1 rounded-xl w-fit">
+                {(['overview', 'descriptions'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
+                      activeTab === tab
+                        ? 'bg-card shadow-sm text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === 'overview' && (
+                <div className="space-y-4">
+                  {/* Logo */}
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Logo URL</label>
+                    <div className="flex items-center gap-3">
+                      {data.logo_url && (
+                        <img
+                          src={data.logo_url}
+                          alt="Logo preview"
+                          className="w-12 h-12 rounded-xl object-contain bg-secondary border border-border p-1"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
+                      <input
+                        type="text"
+                        value={data.logo_url ?? ''}
+                        onChange={(e) => updateDraft({ logo_url: e.target.value || null })}
+                        placeholder="https://…"
+                        className="flex-1 bg-input border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">University Stats</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <EnrichStatField
+                        icon={<Calendar className="w-4 h-4 text-amber-400" />}
+                        label="Founded"
+                        value={data.established_year?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ established_year: v ? Number(v) : null })}
+                        type="number"
+                      />
+                      <EnrichStatField
+                        icon={<Trophy className="w-4 h-4 text-yellow-400" />}
+                        label="Turkey Rank (QS)"
+                        value={data.rank_turkey?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ rank_turkey: v ? Number(v) : null })}
+                        type="number"
+                      />
+                      <EnrichStatField
+                        icon={<Globe className="w-4 h-4 text-blue-400" />}
+                        label="World Rank (QS)"
+                        value={data.rank_world?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ rank_world: v ? Number(v) : null })}
+                        type="number"
+                      />
+                      <EnrichStatField
+                        icon={<Users className="w-4 h-4 text-green-400" />}
+                        label="Total Students"
+                        value={data.students_total?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ students_total: v ? Number(v) : null })}
+                        type="number"
+                      />
+                      <EnrichStatField
+                        icon={<GraduationCap className="w-4 h-4 text-purple-400" />}
+                        label="International Students"
+                        value={data.students_international?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ students_international: v ? Number(v) : null })}
+                        type="number"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Coordinates */}
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                      <span className="inline-flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Coordinates</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <EnrichStatField
+                        label="Latitude"
+                        value={data.latitude?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ latitude: v ? Number(v) : null })}
+                        type="number"
+                        step="0.0001"
+                      />
+                      <EnrichStatField
+                        label="Longitude"
+                        value={data.longitude?.toString() ?? ''}
+                        onChange={(v) => updateDraft({ longitude: v ? Number(v) : null })}
+                        type="number"
+                        step="0.0001"
+                      />
+                    </div>
+                    {data.latitude && data.longitude && (
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}&zoom=15`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 mt-2 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Verify on OpenStreetMap
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'descriptions' && (
+                <div className="space-y-4">
+                  {([
+                    { key: 'description_en', label: 'Description (EN)', dir: 'ltr' },
+                    { key: 'description_tr', label: 'Description (TR)', dir: 'ltr' },
+                    { key: 'description_fa', label: 'Description (FA)', dir: 'rtl' },
+                    { key: 'description_ar', label: 'Description (AR)', dir: 'rtl' },
+                  ] as const).map(({ key, label, dir }) => (
+                    <div key={key}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-sm font-medium">{label}</label>
+                        <span className="text-xs text-muted-foreground">{data[key]?.length ?? 0} chars</span>
+                      </div>
+                      <textarea
+                        dir={dir}
+                        rows={6}
+                        value={data[key] ?? ''}
+                        onChange={(e) => updateDraft({ [key]: e.target.value || null })}
+                        className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-y"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {(state.phase === 'preview') && (
+          <div className="flex items-center gap-3 px-6 py-4 border-t border-border shrink-0">
+            <button
+              onClick={handleApply}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              Apply Changes
+            </button>
+            <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-secondary hover:bg-secondary/70 font-semibold text-sm transition-colors">
+              Cancel
+            </button>
+          </div>
+        )}
+        {state.phase === 'error' && (
+          <div className="flex px-6 py-4 border-t border-border shrink-0">
+            <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-secondary hover:bg-secondary/70 font-semibold text-sm transition-colors">
+              Close
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EnrichStatField({
+  icon, label, value, onChange, type = 'text', step,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  step?: string;
+}) {
+  return (
+    <div className="bg-secondary/40 border border-border rounded-xl p-3">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        {icon}
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      </div>
+      <input
+        type={type}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-transparent text-sm font-semibold focus:outline-none"
+      />
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function AdminUniversitiesPage() {
   const qc = useQueryClient();
   const { data: universities = [], isLoading } = useQuery({
@@ -35,11 +338,15 @@ export default function AdminUniversitiesPage() {
   const [cityFilter, setCityFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  // ── Modal state ───────────────────────────────────────────────────────────
+  // ── Edit modal state ──────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [formError, setFormError] = useState('');
+
+  // ── AI Enrich state ───────────────────────────────────────────────────────
+  const [enrichState, setEnrichState] = useState<AIEnrichState>({ phase: 'idle' });
+  const [enrichingId, setEnrichingId] = useState<number | null>(null);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const createMutation = useMutation({
@@ -73,6 +380,31 @@ export default function AdminUniversitiesPage() {
   }
   const saving = createMutation.isPending || updateMutation.isPending;
 
+  // ── AI Enrich helpers ─────────────────────────────────────────────────────
+  async function startEnrich(u: AdminUniversity) {
+    setEnrichingId(u.id);
+    setEnrichState({ phase: 'loading' });
+    try {
+      const data = await adminApi.universities.aiEnrich(u.id);
+      setEnrichState({ phase: 'preview', university: u, data });
+    } catch (err: any) {
+      setEnrichState({ phase: 'error', message: err.message ?? 'Unknown error' });
+    }
+  }
+
+  async function applyEnrich(data: AIEnrichResult) {
+    if (!enrichingId) return;
+    await adminApi.universities.update(enrichingId, data);
+    qc.invalidateQueries({ queryKey: ['admin', 'universities'] });
+    setEnrichState({ phase: 'idle' });
+    setEnrichingId(null);
+  }
+
+  function closeEnrich() {
+    setEnrichState({ phase: 'idle' });
+    setEnrichingId(null);
+  }
+
   // ── Derived city options ──────────────────────────────────────────────────
   const cityOptions = useMemo(() => {
     const set = new Set<string>();
@@ -98,7 +430,6 @@ export default function AdminUniversitiesPage() {
   const safePage = Math.min(page, totalPages);
   const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // Reset to page 1 whenever filters change
   function updateSearch(v: string) { setSearch(v); setPage(1); }
   function updateType(v: string) { setTypeFilter(v); setPage(1); }
   function updateCity(v: string) { setCityFilter(v); setPage(1); }
@@ -125,7 +456,6 @@ export default function AdminUniversitiesPage() {
 
       {/* Toolbar */}
       <div className="flex flex-wrap gap-3">
-        {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <input
@@ -145,7 +475,6 @@ export default function AdminUniversitiesPage() {
           )}
         </div>
 
-        {/* Type filter */}
         <div className="relative">
           <Filter className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <select
@@ -160,7 +489,6 @@ export default function AdminUniversitiesPage() {
           </select>
         </div>
 
-        {/* City filter */}
         {cityOptions.length > 0 && (
           <div className="relative">
             <Filter className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -175,7 +503,6 @@ export default function AdminUniversitiesPage() {
           </div>
         )}
 
-        {/* Clear all */}
         {hasFilters && (
           <button
             onClick={() => { updateSearch(''); updateType(''); updateCity(''); }}
@@ -222,6 +549,19 @@ export default function AdminUniversitiesPage() {
                   <td className="px-5 py-3.5 text-muted-foreground font-mono text-xs">{u.slug}</td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1">
+                      {/* AI Enrich */}
+                      <button
+                        onClick={() => startEnrich(u)}
+                        disabled={enrichingId === u.id && enrichState.phase === 'loading'}
+                        title="AI Enrich — fetch logo, descriptions, rankings & more"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-40"
+                      >
+                        {enrichingId === u.id && enrichState.phase === 'loading'
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <Sparkles className="w-4 h-4" />
+                        }
+                      </button>
+
                       {u.website_url && (
                         <a
                           href={u.website_url}
@@ -390,6 +730,15 @@ export default function AdminUniversitiesPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* AI Enrich modal */}
+      {enrichState.phase !== 'idle' && (
+        <AIEnrichModal
+          state={enrichState}
+          onClose={closeEnrich}
+          onApply={applyEnrich}
+        />
       )}
     </div>
   );

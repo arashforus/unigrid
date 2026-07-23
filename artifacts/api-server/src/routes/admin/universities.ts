@@ -1,8 +1,18 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { universitiesTable, facultiesTable, insertUniversitySchema } from "@workspace/db";
+import { universitiesTable, facultiesTable, settingsTable, insertUniversitySchema } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import OpenAI from "openai";
+
+/** Resolve the OpenAI API key: DB setting takes priority, then env var. */
+async function resolveOpenAIKey(): Promise<string | null> {
+  const [row] = await db
+    .select()
+    .from(settingsTable)
+    .where(eq(settingsTable.key, "openai_api_key"))
+    .limit(1);
+  return row?.value || process.env.OPENAI_API_KEY || null;
+}
 
 const router = Router();
 
@@ -89,6 +99,97 @@ router.put("/universities/:id", async (req, res) => {
     }
     req.log.error({ err }, "Failed to update university");
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /admin/universities/:id/ai-enrich  — ask AI for rich university data
+router.post("/universities/:id/ai-enrich", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    res.status(400).json({ error: "Invalid university id" });
+    return;
+  }
+
+  const [university] = await db
+    .select()
+    .from(universitiesTable)
+    .where(eq(universitiesTable.id, id))
+    .limit(1);
+
+  if (!university) {
+    res.status(404).json({ error: "University not found" });
+    return;
+  }
+
+  const apiKey = await resolveOpenAIKey();
+  if (!apiKey) {
+    res.status(503).json({ error: "OpenAI API key not configured. Add it in Admin → Settings → API Keys." });
+    return;
+  }
+
+  try {
+    const client = new OpenAI({ apiKey });
+
+    const prompt = `You are a factual research assistant with deep knowledge of Turkish universities.
+Provide comprehensive, accurate information about the following university.
+
+University: "${university.name_en}" (Turkish: "${university.name_tr}")
+City: ${university.city_en}, Turkey
+Slug: ${university.slug}
+
+Return a single JSON object with EXACTLY these fields (no extra fields):
+{
+  "logo_url": "Direct URL to the official university logo image (from the university's own website, e.g. https://www.boun.edu.tr/...logo.png), or null if you are not confident",
+  "description_en": "Detailed English description, ~3000 characters covering history, academic strengths, faculties, campus life, international programs, and notable achievements",
+  "description_tr": "Aynı içeriğin Türkçe versiyonu, ~3000 karakter",
+  "description_fa": "همان محتوا به فارسی، حدود ۳۰۰۰ کاراکتر",
+  "description_ar": "نفس المحتوى باللغة العربية، حوالي ٣٠٠٠ حرف",
+  "latitude": <campus center latitude as a number, e.g. 41.0833>,
+  "longitude": <campus center longitude as a number, e.g. 29.05>,
+  "rank_turkey": <QS ranking within Turkey as integer, or null if unranked>,
+  "rank_world": <QS world ranking as integer, or null if outside top 1000>,
+  "students_total": <total enrolled students as integer, or null if unknown>,
+  "students_international": <international students as integer, or null if unknown>,
+  "established_year": <founding year as integer, or null if unknown>
+}
+
+Be factual and precise. Use the most recent QS rankings available. For rankings, use integers only.
+Descriptions must be rich, engaging prose — not bullet points.`;
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You are a factual assistant. Return only valid JSON with accurate university data." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 8000,
+      temperature: 0.3,
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const data = JSON.parse(raw);
+
+    // Sanitise types before returning
+    const result = {
+      logo_url: typeof data.logo_url === "string" ? data.logo_url : null,
+      description_en: typeof data.description_en === "string" ? data.description_en : null,
+      description_tr: typeof data.description_tr === "string" ? data.description_tr : null,
+      description_fa: typeof data.description_fa === "string" ? data.description_fa : null,
+      description_ar: typeof data.description_ar === "string" ? data.description_ar : null,
+      latitude: typeof data.latitude === "number" ? data.latitude : null,
+      longitude: typeof data.longitude === "number" ? data.longitude : null,
+      rank_turkey: typeof data.rank_turkey === "number" ? Math.round(data.rank_turkey) : null,
+      rank_world: typeof data.rank_world === "number" ? Math.round(data.rank_world) : null,
+      students_total: typeof data.students_total === "number" ? Math.round(data.students_total) : null,
+      students_international: typeof data.students_international === "number" ? Math.round(data.students_international) : null,
+      established_year: typeof data.established_year === "number" ? Math.round(data.established_year) : null,
+    };
+
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "AI enrichment failed");
+    res.status(500).json({ error: "AI enrichment failed. Check your API key and try again." });
   }
 });
 

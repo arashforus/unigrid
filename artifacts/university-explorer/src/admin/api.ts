@@ -41,6 +41,29 @@ export type AdminUniversity = {
   description_tr: string | null;
   description_fa: string | null;
   description_ar: string | null;
+  established_year: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  rank_turkey: number | null;
+  rank_world: number | null;
+  students_total: number | null;
+  students_international: number | null;
+  campus_size_ha: number | null;
+};
+
+export type AIEnrichResult = {
+  logo_url: string | null;
+  description_en: string | null;
+  description_tr: string | null;
+  description_fa: string | null;
+  description_ar: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  rank_turkey: number | null;
+  rank_world: number | null;
+  students_total: number | null;
+  students_international: number | null;
+  established_year: number | null;
 };
 
 export type AdminFaculty = {
@@ -223,6 +246,7 @@ export const adminApi = {
       request<AdminUniversity>(`/universities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: number) => request<{ ok: true }>(`/universities/${id}`, { method: 'DELETE' }),
     findUrl: (id: number) => request<{ url: string | null }>(`/universities/${id}/find-url`, { method: 'POST' }),
+    aiEnrich: (id: number) => request<AIEnrichResult>(`/universities/${id}/ai-enrich`, { method: 'POST' }),
   },
   faculties: {
     list: () => request<AdminFaculty[]>('/faculties'),
