@@ -523,6 +523,7 @@ export default function AdminUniversitiesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-muted-foreground">
+                <th className="text-start font-medium px-5 py-3 w-12">Logo</th>
                 <th className="text-start font-medium px-5 py-3">Name</th>
                 <th className="text-start font-medium px-5 py-3">City</th>
                 <th className="text-start font-medium px-5 py-3">Type</th>
@@ -533,6 +534,20 @@ export default function AdminUniversitiesPage() {
             <tbody>
               {pageItems.map((u) => (
                 <tr key={u.id} className="border-b border-border last:border-0 hover:bg-secondary/40 transition-colors">
+                  <td className="px-5 py-3.5">
+                    {u.logo_url ? (
+                      <img
+                        src={u.logo_url}
+                        alt={u.name_en}
+                        className="w-8 h-8 object-contain rounded"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center text-muted-foreground text-xs font-bold">
+                        {u.name_en.charAt(0)}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-5 py-3.5 font-medium">{u.name_en}</td>
                   <td className="px-5 py-3.5 text-muted-foreground">{u.city_en}</td>
                   <td className="px-5 py-3.5">
@@ -590,7 +605,7 @@ export default function AdminUniversitiesPage() {
               ))}
               {pageItems.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">
                     {hasFilters ? 'No universities match your filters.' : 'No universities yet.'}
                   </td>
                 </tr>
