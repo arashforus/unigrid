@@ -1,7 +1,7 @@
 export default {
   nav: {
     home: "Home",
-    explore: "Explore",
+    explore: "Programs",
     universities: "Universities",
     apply: "Apply",
     language: "Language",

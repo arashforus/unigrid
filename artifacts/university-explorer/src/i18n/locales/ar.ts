@@ -1,7 +1,7 @@
 export default {
   nav: {
     home: "الرئيسية",
-    explore: "استكشف",
+    explore: "البرامج",
     universities: "الجامعات",
     apply: "تقديم",
     language: "اللغة",

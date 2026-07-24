@@ -1,7 +1,7 @@
 export default {
   nav: {
     home: "خانه",
-    explore: "کاوش",
+    explore: "برنامه‌ها",
     universities: "دانشگاه‌ها",
     apply: "پذیرش",
     language: "زبان",

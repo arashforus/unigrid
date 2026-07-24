@@ -1,7 +1,7 @@
 export default {
   nav: {
     home: "Ana Sayfa",
-    explore: "Keşfet",
+    explore: "Programlar",
     universities: "Üniversiteler",
     apply: "Başvuru",
     language: "Dil",
