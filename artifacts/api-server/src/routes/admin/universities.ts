@@ -30,6 +30,51 @@ async function resolveOpenAIModel(): Promise<string> {
   }
 }
 
+/**
+ * Scrape a university website for its logo.
+ * Tries in order: og:image → apple-touch-icon → <img> with "logo" in src.
+ * Returns an absolute URL or null if nothing found.
+ */
+async function fetchLogoFromSite(siteUrl: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    const resp = await fetch(siteUrl, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; UniTurkeyBot/1.0; +https://uniturkey.com)" },
+      redirect: "follow",
+    });
+    clearTimeout(timeout);
+    if (!resp.ok) return null;
+
+    const html = await resp.text();
+    const origin = new URL(siteUrl).origin;
+
+    const resolve = (p: string): string => {
+      if (p.startsWith("http")) return p;
+      return p.startsWith("/") ? `${origin}${p}` : `${origin}/${p}`;
+    };
+
+    // 1. og:image (two attribute orderings)
+    const og =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if (og?.[1]) return resolve(og[1]);
+
+    // 2. apple-touch-icon
+    const touch = html.match(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i);
+    if (touch?.[1]) return resolve(touch[1]);
+
+    // 3. <img> whose src contains the word "logo"
+    const img = html.match(/<img[^>]+src=["']([^"']*logo[^"']*)["']/i);
+    if (img?.[1]) return resolve(img[1]);
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const router = Router();
 
 // GET /admin/universities
@@ -146,17 +191,19 @@ router.post("/universities/:id/ai-enrich", async (req, res) => {
   try {
     const [client, model] = [new OpenAI({ apiKey }), await resolveOpenAIModel()];
 
-    const completion = await client.chat.completions.create({
-      model,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: "You are a factual research assistant with deep knowledge of Turkish universities. Return only valid JSON.",
-        },
-        {
-          role: "user",
-          content: `Provide comprehensive, accurate information about the following Turkish university.
+    // Run AI enrichment and logo scraping in parallel
+    const [completion, scrapedLogo] = await Promise.all([
+      client.chat.completions.create({
+        model,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: "You are a factual research assistant with deep knowledge of Turkish universities. Return only valid JSON.",
+          },
+          {
+            role: "user",
+            content: `Provide comprehensive, accurate information about the following Turkish university.
 
 University: "${university.name_en}" (Turkish: "${university.name_tr}")
 City: ${university.city_en}, Turkey
@@ -164,7 +211,6 @@ Slug: ${university.slug}
 
 Return a single JSON object with EXACTLY these fields (no extra fields):
 {
-  "logo_url": "Direct URL to the official university logo image from the university's own website, or null if not confident",
   "description_en": "Detailed English description ~3000 characters: history, academic strengths, faculties, campus life, international programs, notable achievements",
   "description_tr": "Aynı içeriğin Türkçe versiyonu, ~3000 karakter",
   "description_fa": "همان محتوا به فارسی، حدود ۳۰۰۰ کاراکتر",
@@ -179,17 +225,20 @@ Return a single JSON object with EXACTLY these fields (no extra fields):
 }
 
 Be factual and precise. Use integers only for all numeric fields. Descriptions must be rich engaging prose — not bullet points.`,
-        },
-      ],
-      max_completion_tokens: 8000,
-    });
+          },
+        ],
+        max_completion_tokens: 8000,
+      }),
+      // Scrape the logo from the university's website (reliable) instead of asking the LLM to guess an image URL
+      university.website_url ? fetchLogoFromSite(university.website_url) : Promise.resolve(null),
+    ]);
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
     const data = JSON.parse(raw);
 
     // Sanitise types before returning
     const result = {
-      logo_url: typeof data.logo_url === "string" ? data.logo_url : null,
+      logo_url: scrapedLogo,
       description_en: typeof data.description_en === "string" ? data.description_en : null,
       description_tr: typeof data.description_tr === "string" ? data.description_tr : null,
       description_fa: typeof data.description_fa === "string" ? data.description_fa : null,
