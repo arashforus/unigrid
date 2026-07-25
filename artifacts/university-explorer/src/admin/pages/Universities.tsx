@@ -157,7 +157,7 @@ function AIEnrichModal({
               {showPrompt && (
                 <div className="px-6 py-4 border-b border-border bg-secondary/30">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Request sent to AI</p>
-                  <pre className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed bg-secondary/60 rounded-xl px-4 py-3 overflow-x-auto font-mono">{meta.prompt}</pre>
+                  <pre className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed bg-secondary/60 rounded-xl px-4 py-3 overflow-auto max-h-60 font-mono">{meta.prompt}</pre>
                 </div>
               )}
 
