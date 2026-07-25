@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, type AdminProgram } from '@/admin/api';
-import { Loader2, Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { adminApi, type AdminProgram, type ProgramEnrichResult } from '@/admin/api';
+import { Loader2, Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
@@ -71,17 +71,33 @@ export default function AdminCoursesPage() {
   const [error, setError] = useState('');
 
   const [enrichingId, setEnrichingId] = useState<number | null>(null);
+  const [enrichPreview, setEnrichPreview] = useState<{ id: number; name: string; data: ProgramEnrichResult } | null>(null);
+  const [confirmingSave, setConfirmingSave] = useState(false);
 
   async function handleEnrich(id: number, name: string) {
-    if (!confirm(`AI-enrich "${name}"? This will call the AI API.`)) return;
     setEnrichingId(id);
     try {
-      await adminApi.programs.aiEnrich(id);
-      qc.invalidateQueries({ queryKey: ['admin', 'programs'] });
+      const data = await adminApi.programs.aiEnrich(id);
+      setEnrichPreview({ id, name, data });
     } catch (e: any) {
       alert(e.message);
     } finally {
       setEnrichingId(null);
+    }
+  }
+
+  async function handleEnrichConfirm() {
+    if (!enrichPreview) return;
+    setConfirmingSave(true);
+    try {
+      const { id, data } = enrichPreview;
+      await adminApi.programs.update(id, data as any);
+      qc.invalidateQueries({ queryKey: ['admin', 'programs'] });
+      setEnrichPreview(null);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setConfirmingSave(false);
     }
   }
 
@@ -588,6 +604,87 @@ export default function AdminCoursesPage() {
           </div>
         </div>
       )}
+
+      {/* AI Enrich Preview Modal */}
+      {enrichPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <div>
+                  <h2 className="text-lg font-bold">AI Enrich Preview</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">{enrichPreview.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setEnrichPreview(null)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
+              <EnrichPreviewSection label="Description (EN)" value={enrichPreview.data.description_en} />
+              <EnrichPreviewSection label="Description (TR)" value={enrichPreview.data.description_tr} />
+              <EnrichPreviewSection label="Description (FA)" value={enrichPreview.data.description_fa} rtl />
+              <EnrichPreviewSection label="Description (AR)" value={enrichPreview.data.description_ar} rtl />
+              <EnrichPreviewSection label="Admission Requirements" value={enrichPreview.data.admission_requirements} />
+
+              <div className="grid grid-cols-2 gap-4">
+                <EnrichPreviewCell label="Quota — Total" value={enrichPreview.data.quota_total != null ? String(enrichPreview.data.quota_total) : null} />
+                <EnrichPreviewCell label="Quota — International" value={enrichPreview.data.quota_international != null ? String(enrichPreview.data.quota_international) : null} />
+                <EnrichPreviewCell label="Deadline — Fall" value={enrichPreview.data.application_deadline_fall} />
+                <EnrichPreviewCell label="Deadline — Spring" value={enrichPreview.data.application_deadline_spring} />
+                <EnrichPreviewCell label="Scholarship" value={enrichPreview.data.scholarship_available === true ? 'Yes' : enrichPreview.data.scholarship_available === false ? 'No' : null} />
+                <EnrichPreviewCell label="Thesis Option" value={enrichPreview.data.thesis_option} />
+              </div>
+
+              <EnrichPreviewSection label="Scholarship Description" value={enrichPreview.data.scholarship_description} />
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-border flex items-center gap-3 shrink-0">
+              <button
+                onClick={handleEnrichConfirm}
+                disabled={confirmingSave}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-all disabled:opacity-60"
+              >
+                {confirmingSave
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+                  : <><CheckCircle2 className="w-4 h-4" /> Confirm & Save</>}
+              </button>
+              <button
+                onClick={() => setEnrichPreview(null)}
+                disabled={confirmingSave}
+                className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary/70 font-semibold transition-colors disabled:opacity-60"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EnrichPreviewSection({ label, value, rtl }: { label: string; value: string | null; rtl?: boolean }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{label}</p>
+      {value
+        ? <p dir={rtl ? 'rtl' : undefined} className="text-sm leading-relaxed whitespace-pre-wrap bg-secondary/40 rounded-xl px-4 py-3">{value}</p>
+        : <p className="text-sm text-muted-foreground italic">—</p>}
+    </div>
+  );
+}
+
+function EnrichPreviewCell({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="bg-secondary/40 rounded-xl px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
+      <p className="text-sm font-medium">{value ?? <span className="text-muted-foreground italic">—</span>}</p>
     </div>
   );
 }

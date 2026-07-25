@@ -286,7 +286,7 @@ export const adminApi = {
     update: (id: number, data: Record<string, unknown>) =>
       request<AdminProgram>(`/programs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: number) => request<{ ok: true }>(`/programs/${id}`, { method: 'DELETE' }),
-    aiEnrich: (id: number) => request<AdminProgram>(`/programs/${id}/ai-enrich`, { method: 'POST' }),
+    aiEnrich: (id: number) => request<ProgramEnrichResult>(`/programs/${id}/ai-enrich`, { method: 'POST' }),
   },
   tasks: {
     list: () => request<AdminTask[]>('/tasks'),

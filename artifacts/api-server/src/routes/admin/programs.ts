@@ -311,13 +311,8 @@ Be factual. Use null for any field you are not confident about.`,
         : null,
     };
 
-    const [updated] = await db
-      .update(programsTable)
-      .set(update)
-      .where(eq(programsTable.id, id))
-      .returning();
-
-    res.json(updated);
+    // Return the enriched data as a preview — the client decides whether to save it.
+    res.json(update);
   } catch (err) {
     req.log.error({ err }, "Failed to AI-enrich program");
     res.status(500).json({ error: "Internal server error" });
