@@ -210,6 +210,26 @@ export default {
       }
     ]
   },
+  program: {
+    aboutProgram: "About This Program",
+    admissionRequirements: "Admission Requirements",
+    seatsAvailable: "Available Seats",
+    total: "Total",
+    international: "International",
+    applicationDeadlines: "Application Deadlines",
+    fallSemester: "Fall Semester",
+    springSemester: "Spring Semester",
+    scholarship: "Scholarship",
+    available: "Available",
+    notAvailable: "Not Available",
+    thesisOption: "Thesis Option",
+    thesis: "Thesis Track",
+    nonThesis: "Non-Thesis Track",
+    both: "Thesis & Non-Thesis",
+    yokAtlasLink: "View on YÖK Atlas",
+    aiEnrich: "AI Enrich",
+    enriching: "Enriching...",
+  },
   footer: {
     tagline: "Your trusted guide to higher education in Turkey.",
     quickLinks: "Quick Links",

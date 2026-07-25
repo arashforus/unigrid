@@ -210,6 +210,26 @@ export default {
       }
     ]
   },
+  program: {
+    aboutProgram: "Bu Program Hakkında",
+    admissionRequirements: "Kabul Gereksinimleri",
+    seatsAvailable: "Mevcut Kontenjanlar",
+    total: "Toplam",
+    international: "Uluslararası",
+    applicationDeadlines: "Başvuru Son Tarihleri",
+    fallSemester: "Güz Dönemi",
+    springSemester: "Bahar Dönemi",
+    scholarship: "Burs",
+    available: "Mevcut",
+    notAvailable: "Mevcut Değil",
+    thesisOption: "Tez Seçeneği",
+    thesis: "Tezli",
+    nonThesis: "Tezsiz",
+    both: "Tezli & Tezsiz",
+    yokAtlasLink: "YÖK Atlas'ta Görüntüle",
+    aiEnrich: "Yapay Zeka Zenginleştirme",
+    enriching: "Zenginleştiriliyor...",
+  },
   footer: {
     tagline: "Türkiye'deki yükseköğretim için güvenilir rehberiniz.",
     quickLinks: "Hızlı Bağlantılar",

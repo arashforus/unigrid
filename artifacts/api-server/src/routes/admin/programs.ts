@@ -1,14 +1,26 @@
 import { Router } from "express";
+import OpenAI from "openai";
 import { db } from "@workspace/db";
 import {
   programsTable,
   facultiesTable,
   universitiesTable,
   tuitionFeesTable,
+  settingsTable,
   insertProgramSchema,
 } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
+
+async function resolveOpenAIKey(): Promise<string> {
+  const [row] = await db.select().from(settingsTable).where(eq(settingsTable.key, "openai_api_key")).limit(1);
+  return row?.value ?? process.env["OPENAI_API_KEY"] ?? "";
+}
+
+async function resolveOpenAIModel(): Promise<string> {
+  const [row] = await db.select().from(settingsTable).where(eq(settingsTable.key, "openai_model")).limit(1);
+  return row?.value ?? "gpt-4.1-mini";
+}
 
 const router = Router();
 
@@ -187,6 +199,127 @@ router.delete("/programs/:id", async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "Failed to delete course");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /admin/programs/:id/ai-enrich
+router.post("/programs/:id/ai-enrich", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    res.status(400).json({ error: "Invalid program id" });
+    return;
+  }
+
+  try {
+    const [program] = await db.select().from(programsTable).where(eq(programsTable.id, id)).limit(1);
+    if (!program) {
+      res.status(404).json({ error: "Program not found" });
+      return;
+    }
+
+    const [faculty] = await db
+      .select()
+      .from(facultiesTable)
+      .where(eq(facultiesTable.id, program.faculty_id))
+      .limit(1);
+
+    const university = faculty
+      ? (
+          await db
+            .select()
+            .from(universitiesTable)
+            .where(eq(universitiesTable.id, faculty.university_id))
+            .limit(1)
+        )[0]
+      : undefined;
+
+    const [apiKey, model] = await Promise.all([resolveOpenAIKey(), resolveOpenAIModel()]);
+    if (!apiKey) {
+      res.status(400).json({ error: "No OpenAI API key configured" });
+      return;
+    }
+
+    const client = new OpenAI({ apiKey });
+
+    const isMasterOrDoc = program.degree_type === "master" || program.degree_type === "doctorate";
+
+    const completion = await client.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a factual research assistant specializing in Turkish higher education. Return only valid JSON.",
+        },
+        {
+          role: "user",
+          content: `Provide detailed, accurate information about the following university program in Turkey.
+
+Program: "${program.name_en}" (${program.name_tr})
+University: "${university?.name_en ?? "Unknown"}"
+Faculty: "${faculty?.name_en ?? "Unknown"}"
+Degree type: ${program.degree_type}
+Language of instruction: ${program.language}
+Duration: ${program.duration_years} years
+
+Return a single JSON object with EXACTLY these fields:
+{
+  "description_en": "Rich ~1500 character description: what students study, key course areas, specializations, career outcomes, and what makes this program notable",
+  "description_tr": "Aynı içeriğin Türkçe versiyonu, ~1500 karakter",
+  "description_fa": "همان محتوا به فارسی، حدود ۱۵۰۰ کاراکتر",
+  "description_ar": "نفس المحتوى باللغة العربية، حوالي ١٥٠٠ حرف",
+  "admission_requirements": "English prose 300-500 chars: minimum GPA, language test scores (TOEFL/IELTS/YÖS), entrance exam requirements, key document requirements for international students. Use typical Turkish university standards if specifics are unknown.",
+  "quota_total": <total program seat quota as integer, or null if unknown>,
+  "quota_international": <international student quota as integer, or null if unknown>,
+  "application_deadline_fall": "Typical fall deadline for international applicants e.g. 'July 31', or null if unknown",
+  "application_deadline_spring": "Typical spring deadline e.g. 'December 31', or null if program is fall-only or unknown",
+  "scholarship_available": <true if merit/need scholarships are commonly offered, false if definitely none, null if unknown>,
+  "scholarship_description": "Brief description of scholarship types and typical amounts if available, else null",
+  "thesis_option": ${isMasterOrDoc ? '"thesis", "non-thesis", or "both" — whether this program offers a thesis track, coursework-only track, or both' : "null"}
+}
+
+Be factual. Use null for any field you are not confident about.`,
+        },
+      ],
+      max_completion_tokens: 4000,
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const data = JSON.parse(raw);
+
+    const update = {
+      description_en: typeof data.description_en === "string" ? data.description_en : null,
+      description_tr: typeof data.description_tr === "string" ? data.description_tr : null,
+      description_fa: typeof data.description_fa === "string" ? data.description_fa : null,
+      description_ar: typeof data.description_ar === "string" ? data.description_ar : null,
+      admission_requirements:
+        typeof data.admission_requirements === "string" ? data.admission_requirements : null,
+      quota_total: Number.isInteger(data.quota_total) ? data.quota_total : null,
+      quota_international: Number.isInteger(data.quota_international) ? data.quota_international : null,
+      application_deadline_fall:
+        typeof data.application_deadline_fall === "string" ? data.application_deadline_fall : null,
+      application_deadline_spring:
+        typeof data.application_deadline_spring === "string" ? data.application_deadline_spring : null,
+      scholarship_available:
+        typeof data.scholarship_available === "boolean" ? data.scholarship_available : null,
+      scholarship_description:
+        typeof data.scholarship_description === "string" ? data.scholarship_description : null,
+      thesis_option: ["thesis", "non-thesis", "both"].includes(data.thesis_option)
+        ? data.thesis_option
+        : null,
+    };
+
+    const [updated] = await db
+      .update(programsTable)
+      .set(update)
+      .where(eq(programsTable.id, id))
+      .returning();
+
+    res.json(updated);
+  } catch (err) {
+    req.log.error({ err }, "Failed to AI-enrich program");
     res.status(500).json({ error: "Internal server error" });
   }
 });

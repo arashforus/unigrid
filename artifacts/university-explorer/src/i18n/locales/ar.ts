@@ -210,6 +210,26 @@ export default {
       }
     ]
   },
+  program: {
+    aboutProgram: "حول هذا البرنامج",
+    admissionRequirements: "متطلبات القبول",
+    seatsAvailable: "المقاعد المتاحة",
+    total: "الإجمالي",
+    international: "دولي",
+    applicationDeadlines: "مواعيد التقديم",
+    fallSemester: "الفصل الخريفي",
+    springSemester: "الفصل الربيعي",
+    scholarship: "المنحة الدراسية",
+    available: "متاحة",
+    notAvailable: "غير متاحة",
+    thesisOption: "خيار الأطروحة",
+    thesis: "مع أطروحة",
+    nonThesis: "بدون أطروحة",
+    both: "مع وبدون أطروحة",
+    yokAtlasLink: "عرض على YÖK Atlas",
+    aiEnrich: "إثراء بالذكاء الاصطناعي",
+    enriching: "جاري الإثراء...",
+  },
   footer: {
     tagline: "دليلك الموثوق للتعليم العالي في تركيا.",
     quickLinks: "روابط سريعة",

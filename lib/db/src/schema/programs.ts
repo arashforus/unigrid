@@ -12,9 +12,22 @@ export const programsTable = pgTable("programs", {
   name_ar: text("name_ar").notNull(),
   yok_atlas_code: text("yok_atlas_code"),
   degree_type: text("degree_type").notNull(), // 'associate' | 'bachelor' | 'master' | 'doctorate'
-  language: text("language").notNull(), // 'Turkish', 'English', 'Turkish/English'
+  language: text("language").notNull(),       // 'Turkish', 'English', 'Turkish/English'
   duration_years: integer("duration_years").notNull(),
   is_active: boolean("is_active").notNull().default(true),
+  // AI-enriched fields
+  description_en: text("description_en"),
+  description_tr: text("description_tr"),
+  description_fa: text("description_fa"),
+  description_ar: text("description_ar"),
+  admission_requirements: text("admission_requirements"),
+  quota_total: integer("quota_total"),
+  quota_international: integer("quota_international"),
+  application_deadline_fall: text("application_deadline_fall"),
+  application_deadline_spring: text("application_deadline_spring"),
+  scholarship_available: boolean("scholarship_available"),
+  scholarship_description: text("scholarship_description"),
+  thesis_option: text("thesis_option"), // 'thesis' | 'non-thesis' | 'both' — master/doctorate only
 });
 
 export const insertProgramSchema = createInsertSchema(programsTable).omit({ id: true });

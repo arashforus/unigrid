@@ -210,6 +210,26 @@ export default {
       }
     ]
   },
+  program: {
+    aboutProgram: "درباره این برنامه",
+    admissionRequirements: "شرایط پذیرش",
+    seatsAvailable: "ظرفیت‌های موجود",
+    total: "کل",
+    international: "بین‌المللی",
+    applicationDeadlines: "مهلت‌های ثبت‌نام",
+    fallSemester: "نیمسال پاییز",
+    springSemester: "نیمسال بهار",
+    scholarship: "بورسیه",
+    available: "موجود",
+    notAvailable: "موجود نیست",
+    thesisOption: "گزینه پایان‌نامه",
+    thesis: "با پایان‌نامه",
+    nonThesis: "بدون پایان‌نامه",
+    both: "با و بدون پایان‌نامه",
+    yokAtlasLink: "مشاهده در YÖK Atlas",
+    aiEnrich: "غنی‌سازی با هوش مصنوعی",
+    enriching: "در حال غنی‌سازی...",
+  },
   footer: {
     tagline: "راهنمای معتمد شما برای آموزش عالی در ترکیه.",
     quickLinks: "لینک‌های سریع",

@@ -95,10 +95,38 @@ export type AdminProgram = {
   language: string;
   duration_years: number;
   is_active: boolean;
+  // Enriched fields
+  description_en: string | null;
+  description_tr: string | null;
+  description_fa: string | null;
+  description_ar: string | null;
+  admission_requirements: string | null;
+  quota_total: number | null;
+  quota_international: number | null;
+  application_deadline_fall: string | null;
+  application_deadline_spring: string | null;
+  scholarship_available: boolean | null;
+  scholarship_description: string | null;
+  thesis_option: string | null;
   faculty_name: string | null;
   university_name: string | null;
   university_id: number | null;
   tuition_fees: AdminTuitionFee[];
+};
+
+export type ProgramEnrichResult = {
+  description_en: string | null;
+  description_tr: string | null;
+  description_fa: string | null;
+  description_ar: string | null;
+  admission_requirements: string | null;
+  quota_total: number | null;
+  quota_international: number | null;
+  application_deadline_fall: string | null;
+  application_deadline_spring: string | null;
+  scholarship_available: boolean | null;
+  scholarship_description: string | null;
+  thesis_option: string | null;
 };
 
 export type AdminTask = {
@@ -258,6 +286,7 @@ export const adminApi = {
     update: (id: number, data: Record<string, unknown>) =>
       request<AdminProgram>(`/programs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: number) => request<{ ok: true }>(`/programs/${id}`, { method: 'DELETE' }),
+    aiEnrich: (id: number) => request<AdminProgram>(`/programs/${id}/ai-enrich`, { method: 'POST' }),
   },
   tasks: {
     list: () => request<AdminTask[]>('/tasks'),

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi, type AdminProgram } from '@/admin/api';
-import { Loader2, Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
@@ -50,6 +50,21 @@ export default function AdminCoursesPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [error, setError] = useState('');
+
+  const [enrichingId, setEnrichingId] = useState<number | null>(null);
+
+  async function handleEnrich(id: number, name: string) {
+    if (!confirm(`AI-enrich "${name}"? This will call the AI API.`)) return;
+    setEnrichingId(id);
+    try {
+      await adminApi.programs.aiEnrich(id);
+      qc.invalidateQueries({ queryKey: ['admin', 'programs'] });
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setEnrichingId(null);
+    }
+  }
 
   const createMutation = useMutation({
     mutationFn: (data: FormState) => adminApi.programs.create(data),
@@ -260,6 +275,16 @@ export default function AdminCoursesPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleEnrich(p.id, p.name_en)}
+                            disabled={enrichingId === p.id}
+                            title="AI Enrich"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
+                          >
+                            {enrichingId === p.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <Sparkles className="w-4 h-4" />}
+                          </button>
                           <button onClick={() => openEdit(p)} className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
