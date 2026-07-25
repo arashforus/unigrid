@@ -66,6 +66,18 @@ export type AIEnrichResult = {
   established_year: number | null;
 };
 
+export type EnrichMeta = {
+  model: string;
+  requests: number;
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  prompt: string;
+};
+
+export type UniversityEnrichResult = {
+  fields: AIEnrichResult;
+  meta: EnrichMeta;
+};
+
 export type AdminFaculty = {
   id: number;
   name_en: string;
@@ -143,11 +155,7 @@ export type ProgramEnrichFields = {
 
 export type ProgramEnrichResult = {
   fields: ProgramEnrichFields;
-  meta: {
-    model: string;
-    requests: number;
-    usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
-  };
+  meta: EnrichMeta;
 };
 
 export type AdminTask = {
@@ -295,7 +303,7 @@ export const adminApi = {
       request<AdminUniversity>(`/universities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     remove: (id: number) => request<{ ok: true }>(`/universities/${id}`, { method: 'DELETE' }),
     findUrl: (id: number) => request<{ url: string | null }>(`/universities/${id}/find-url`, { method: 'POST' }),
-    aiEnrich: (id: number) => request<AIEnrichResult>(`/universities/${id}/ai-enrich`, { method: 'POST' }),
+    aiEnrich: (id: number) => request<UniversityEnrichResult>(`/universities/${id}/ai-enrich`, { method: 'POST' }),
   },
   faculties: {
     list: () => request<AdminFaculty[]>('/faculties'),

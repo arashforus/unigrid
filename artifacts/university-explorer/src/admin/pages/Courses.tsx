@@ -79,6 +79,7 @@ export default function AdminCoursesPage() {
   const [enrichingId, setEnrichingId] = useState<number | null>(null);
   const [enrichPreview, setEnrichPreview] = useState<{ id: number; name: string; data: ProgramEnrichResult } | null>(null); // data.fields + data.meta
   const [confirmingSave, setConfirmingSave] = useState(false);
+  const [showEnrichPrompt, setShowEnrichPrompt] = useState(false);
 
   async function handleEnrich(id: number, name: string) {
     setEnrichingId(id);
@@ -675,7 +676,21 @@ export default function AdminCoursesPage() {
                 <span className="font-semibold text-foreground">Total tokens</span>
                 <span className="text-amber-600 dark:text-amber-400 font-semibold">{enrichPreview.data.meta.usage.total_tokens.toLocaleString()}</span>
               </span>
+              <button
+                onClick={() => setShowEnrichPrompt((v) => !v)}
+                className="ms-auto flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:text-amber-500 transition-colors font-medium"
+              >
+                {showEnrichPrompt ? 'Hide' : 'Show'} request
+              </button>
             </div>
+
+            {/* Request prompt (collapsible) */}
+            {showEnrichPrompt && (
+              <div className="px-6 py-4 border-b border-border bg-secondary/30">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Request sent to AI</p>
+                <pre className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed bg-secondary/60 rounded-xl px-4 py-3 overflow-x-auto font-mono">{enrichPreview.data.meta.prompt}</pre>
+              </div>
+            )}
 
             {/* Scrollable content */}
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
@@ -715,7 +730,7 @@ export default function AdminCoursesPage() {
                   : <><CheckCircle2 className="w-4 h-4" /> Confirm & Save</>}
               </button>
               <button
-                onClick={() => setEnrichPreview(null)}
+                onClick={() => { setEnrichPreview(null); setShowEnrichPrompt(false); }}
                 disabled={confirmingSave}
                 className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary/70 font-semibold transition-colors disabled:opacity-60"
               >

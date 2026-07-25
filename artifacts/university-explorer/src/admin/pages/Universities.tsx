@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, type AdminUniversity, type AIEnrichResult } from '@/admin/api';
+import { adminApi, type AdminUniversity, type AIEnrichResult, type UniversityEnrichResult } from '@/admin/api';
 import {
   Loader2, Plus, Pencil, Trash2, X, ExternalLink,
   Search, ChevronLeft, ChevronRight, Filter, Sparkles,
@@ -29,7 +29,7 @@ type AIEnrichState =
   | { phase: 'idle' }
   | { phase: 'loading' }
   | { phase: 'error'; message: string }
-  | { phase: 'preview'; university: AdminUniversity; data: AIEnrichResult };
+  | { phase: 'preview'; university: AdminUniversity; data: UniversityEnrichResult };
 
 function AIEnrichModal({
   state,
@@ -43,12 +43,14 @@ function AIEnrichModal({
   const [draft, setDraft] = useState<AIEnrichResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'descriptions'>('overview');
+  const [showPrompt, setShowPrompt] = useState(false);
 
   // Initialise draft when preview data arrives
-  const data = state.phase === 'preview' ? (draft ?? state.data) : null;
+  const data = state.phase === 'preview' ? (draft ?? state.data.fields) : null;
+  const meta = state.phase === 'preview' ? state.data.meta : null;
 
   function updateDraft(patch: Partial<AIEnrichResult>) {
-    setDraft((d) => ({ ...(d ?? (state.phase === 'preview' ? state.data : {})), ...patch } as AIEnrichResult));
+    setDraft((d) => ({ ...(d ?? (state.phase === 'preview' ? state.data.fields : {})), ...patch } as AIEnrichResult));
   }
 
   async function handleApply() {
@@ -120,7 +122,45 @@ function AIEnrichModal({
           )}
 
           {/* Preview */}
-          {state.phase === 'preview' && data && (
+          {state.phase === 'preview' && data && meta && (
+            <div className="space-y-0">
+              {/* AI stats bar */}
+              <div className="flex items-center gap-4 px-6 py-2.5 bg-violet-500/8 border-b border-violet-500/20 text-xs text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1.5">
+                  <span className="font-semibold text-foreground">Model</span>
+                  <code className="bg-secondary px-1.5 py-0.5 rounded text-[11px]">{meta.model}</code>
+                </span>
+                <span className="text-border">|</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-semibold text-foreground">Prompt tokens</span>
+                  {meta.usage.prompt_tokens.toLocaleString()}
+                </span>
+                <span className="text-border">|</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-semibold text-foreground">Completion tokens</span>
+                  {meta.usage.completion_tokens.toLocaleString()}
+                </span>
+                <span className="text-border">|</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-semibold text-foreground">Total</span>
+                  <span className="text-violet-400 font-semibold">{meta.usage.total_tokens.toLocaleString()}</span>
+                </span>
+                <button
+                  onClick={() => setShowPrompt((v) => !v)}
+                  className="ms-auto flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors font-medium"
+                >
+                  {showPrompt ? 'Hide' : 'Show'} request
+                </button>
+              </div>
+
+              {/* Request prompt (collapsible) */}
+              {showPrompt && (
+                <div className="px-6 py-4 border-b border-border bg-secondary/30">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Request sent to AI</p>
+                  <pre className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed bg-secondary/60 rounded-xl px-4 py-3 overflow-x-auto font-mono">{meta.prompt}</pre>
+                </div>
+              )}
+
             <div className="p-6 space-y-5">
               {/* Tabs */}
               <div className="flex gap-1 bg-secondary/50 p-1 rounded-xl w-fit">
@@ -264,6 +304,7 @@ function AIEnrichModal({
                   ))}
                 </div>
               )}
+            </div>
             </div>
           )}
         </div>

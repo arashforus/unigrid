@@ -191,19 +191,7 @@ router.post("/universities/:id/ai-enrich", async (req, res) => {
   try {
     const [client, model] = [new OpenAI({ apiKey }), await resolveOpenAIModel()];
 
-    // Run AI enrichment and logo scraping in parallel
-    const [completion, scrapedLogo] = await Promise.all([
-      client.chat.completions.create({
-        model,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: "You are a factual research assistant with deep knowledge of Turkish universities. Return only valid JSON.",
-          },
-          {
-            role: "user",
-            content: `Provide comprehensive, accurate information about the following Turkish university.
+    const userPrompt = `Provide comprehensive, accurate information about the following Turkish university.
 
 University: "${university.name_en}" (Turkish: "${university.name_tr}")
 City: ${university.city_en}, Turkey
@@ -224,7 +212,21 @@ Return a single JSON object with EXACTLY these fields (no extra fields):
   "established_year": <founding year as integer, or null if unknown>
 }
 
-Be factual and precise. Use integers only for all numeric fields. Descriptions must be rich engaging prose — not bullet points.`,
+Be factual and precise. Use integers only for all numeric fields. Descriptions must be rich engaging prose — not bullet points.`;
+
+    // Run AI enrichment and logo scraping in parallel
+    const [completion, scrapedLogo] = await Promise.all([
+      client.chat.completions.create({
+        model,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: "You are a factual research assistant with deep knowledge of Turkish universities. Return only valid JSON.",
+          },
+          {
+            role: "user",
+            content: userPrompt,
           },
         ],
         max_completion_tokens: 8000,
@@ -237,7 +239,7 @@ Be factual and precise. Use integers only for all numeric fields. Descriptions m
     const data = JSON.parse(raw);
 
     // Sanitise types before returning
-    const result = {
+    const fields = {
       logo_url: scrapedLogo,
       description_en: typeof data.description_en === "string" ? data.description_en : null,
       description_tr: typeof data.description_tr === "string" ? data.description_tr : null,
@@ -252,7 +254,19 @@ Be factual and precise. Use integers only for all numeric fields. Descriptions m
       established_year: typeof data.established_year === "number" ? Math.round(data.established_year) : null,
     };
 
-    res.json(result);
+    res.json({
+      fields,
+      meta: {
+        model: completion.model,
+        requests: 1,
+        usage: {
+          prompt_tokens: completion.usage?.prompt_tokens ?? 0,
+          completion_tokens: completion.usage?.completion_tokens ?? 0,
+          total_tokens: completion.usage?.total_tokens ?? 0,
+        },
+        prompt: userPrompt,
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "AI enrichment failed");
     res.status(500).json({ error: "AI enrichment failed. Check your API key and try again." });

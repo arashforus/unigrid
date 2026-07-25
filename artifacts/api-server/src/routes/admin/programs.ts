@@ -244,18 +244,7 @@ router.post("/programs/:id/ai-enrich", async (req, res) => {
 
     const isMasterOrDoc = program.degree_type === "master" || program.degree_type === "doctorate";
 
-    const completion = await client.chat.completions.create({
-      model,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a factual research assistant specializing in Turkish higher education. Return only valid JSON.",
-        },
-        {
-          role: "user",
-          content: `Provide detailed, accurate information about the following university program in Turkey.
+    const userPrompt = `Provide detailed, accurate information about the following university program in Turkey.
 
 Program: "${program.name_en}" (${program.name_tr})
 University: "${university?.name_en ?? "Unknown"}"
@@ -286,7 +275,20 @@ Return a single JSON object with EXACTLY these fields:
   "thesis_option": ${isMasterOrDoc ? '"thesis", "non-thesis", or "both" — whether this program offers a thesis track, coursework-only track, or both' : "null"}
 }
 
-Be factual. Use null for any field you are not confident about.`,
+Be factual. Use null for any field you are not confident about.`;
+
+    const completion = await client.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a factual research assistant specializing in Turkish higher education. Return only valid JSON.",
+        },
+        {
+          role: "user",
+          content: userPrompt,
         },
       ],
       max_completion_tokens: 4000,
@@ -340,6 +342,7 @@ Be factual. Use null for any field you are not confident about.`,
           completion_tokens: completion.usage?.completion_tokens ?? 0,
           total_tokens: completion.usage?.total_tokens ?? 0,
         },
+        prompt: userPrompt,
       },
     });
   } catch (err) {
