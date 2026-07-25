@@ -26,12 +26,18 @@ type FormState = {
   description_fa: string;
   description_ar: string;
   admission_requirements: string;
+  admission_requirements_tr: string;
+  admission_requirements_fa: string;
+  admission_requirements_ar: string;
   quota_total: string;
   quota_international: string;
   application_deadline_fall: string;
   application_deadline_spring: string;
   scholarship_available: string; // 'true' | 'false' | ''
   scholarship_description: string;
+  scholarship_description_tr: string;
+  scholarship_description_fa: string;
+  scholarship_description_ar: string;
   thesis_option: string; // 'thesis' | 'non-thesis' | 'both' | ''
 };
 
@@ -45,10 +51,10 @@ const EMPTY_FORM: FormState = {
   is_active: true,
   tuition_fee: { academic_year: '2024-2025', domestic_fee: '', international_fee: '', domestic_currency: 'TRY', international_currency: 'TRY' },
   description_en: '', description_tr: '', description_fa: '', description_ar: '',
-  admission_requirements: '',
+  admission_requirements: '', admission_requirements_tr: '', admission_requirements_fa: '', admission_requirements_ar: '',
   quota_total: '', quota_international: '',
   application_deadline_fall: '', application_deadline_spring: '',
-  scholarship_available: '', scholarship_description: '',
+  scholarship_available: '', scholarship_description: '', scholarship_description_tr: '', scholarship_description_fa: '', scholarship_description_ar: '',
   thesis_option: '',
 };
 
@@ -176,12 +182,18 @@ export default function AdminCoursesPage() {
       description_fa: p.description_fa ?? '',
       description_ar: p.description_ar ?? '',
       admission_requirements: p.admission_requirements ?? '',
+      admission_requirements_tr: p.admission_requirements_tr ?? '',
+      admission_requirements_fa: p.admission_requirements_fa ?? '',
+      admission_requirements_ar: p.admission_requirements_ar ?? '',
       quota_total: p.quota_total != null ? String(p.quota_total) : '',
       quota_international: p.quota_international != null ? String(p.quota_international) : '',
       application_deadline_fall: p.application_deadline_fall ?? '',
       application_deadline_spring: p.application_deadline_spring ?? '',
       scholarship_available: p.scholarship_available != null ? String(p.scholarship_available) : '',
       scholarship_description: p.scholarship_description ?? '',
+      scholarship_description_tr: p.scholarship_description_tr ?? '',
+      scholarship_description_fa: p.scholarship_description_fa ?? '',
+      scholarship_description_ar: p.scholarship_description_ar ?? '',
       thesis_option: p.thesis_option ?? '',
     });
     setError('');
@@ -194,9 +206,11 @@ export default function AdminCoursesPage() {
     if (!form.faculty_id) { setError('Please select a faculty'); return; }
     // Serialize enriched fields: convert strings → proper types / nulls
     const { tuition_fee, description_en, description_tr, description_fa, description_ar,
-      admission_requirements, quota_total, quota_international,
+      admission_requirements, admission_requirements_tr, admission_requirements_fa, admission_requirements_ar,
+      quota_total, quota_international,
       application_deadline_fall, application_deadline_spring,
-      scholarship_available, scholarship_description, thesis_option, ...base } = form;
+      scholarship_available, scholarship_description, scholarship_description_tr, scholarship_description_fa, scholarship_description_ar,
+      thesis_option, ...base } = form;
     const payload = {
       ...base,
       tuition_fee,
@@ -205,12 +219,18 @@ export default function AdminCoursesPage() {
       description_fa: description_fa || null,
       description_ar: description_ar || null,
       admission_requirements: admission_requirements || null,
+      admission_requirements_tr: admission_requirements_tr || null,
+      admission_requirements_fa: admission_requirements_fa || null,
+      admission_requirements_ar: admission_requirements_ar || null,
       quota_total: quota_total !== '' ? Number(quota_total) : null,
       quota_international: quota_international !== '' ? Number(quota_international) : null,
       application_deadline_fall: application_deadline_fall || null,
       application_deadline_spring: application_deadline_spring || null,
       scholarship_available: scholarship_available === 'true' ? true : scholarship_available === 'false' ? false : null,
       scholarship_description: scholarship_description || null,
+      scholarship_description_tr: scholarship_description_tr || null,
+      scholarship_description_fa: scholarship_description_fa || null,
+      scholarship_description_ar: scholarship_description_ar || null,
       thesis_option: thesis_option || null,
     };
     if (editingId) updateMutation.mutate({ id: editingId, data: payload });
@@ -548,7 +568,10 @@ export default function AdminCoursesPage() {
                 <TextArea label="Description (TR)" value={form.description_tr} onChange={(v) => setForm((f) => ({ ...f, description_tr: v }))} />
                 <TextArea label="Description (FA)" value={form.description_fa} onChange={(v) => setForm((f) => ({ ...f, description_fa: v }))} dir="rtl" />
                 <TextArea label="Description (AR)" value={form.description_ar} onChange={(v) => setForm((f) => ({ ...f, description_ar: v }))} dir="rtl" />
-                <TextArea label="Admission Requirements" value={form.admission_requirements} onChange={(v) => setForm((f) => ({ ...f, admission_requirements: v }))} />
+                <TextArea label="Admission Requirements (EN)" value={form.admission_requirements} onChange={(v) => setForm((f) => ({ ...f, admission_requirements: v }))} />
+                <TextArea label="Admission Requirements (TR)" value={form.admission_requirements_tr} onChange={(v) => setForm((f) => ({ ...f, admission_requirements_tr: v }))} />
+                <TextArea label="Admission Requirements (FA)" value={form.admission_requirements_fa} onChange={(v) => setForm((f) => ({ ...f, admission_requirements_fa: v }))} dir="rtl" />
+                <TextArea label="Admission Requirements (AR)" value={form.admission_requirements_ar} onChange={(v) => setForm((f) => ({ ...f, admission_requirements_ar: v }))} dir="rtl" />
 
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Quota (Total)" value={form.quota_total} onChange={(v) => setForm((f) => ({ ...f, quota_total: v }))} />
@@ -585,7 +608,10 @@ export default function AdminCoursesPage() {
                   </div>
                 </div>
 
-                <TextArea label="Scholarship Description" value={form.scholarship_description} onChange={(v) => setForm((f) => ({ ...f, scholarship_description: v }))} />
+                <TextArea label="Scholarship Description (EN)" value={form.scholarship_description} onChange={(v) => setForm((f) => ({ ...f, scholarship_description: v }))} />
+                <TextArea label="Scholarship Description (TR)" value={form.scholarship_description_tr} onChange={(v) => setForm((f) => ({ ...f, scholarship_description_tr: v }))} />
+                <TextArea label="Scholarship Description (FA)" value={form.scholarship_description_fa} onChange={(v) => setForm((f) => ({ ...f, scholarship_description_fa: v }))} dir="rtl" />
+                <TextArea label="Scholarship Description (AR)" value={form.scholarship_description_ar} onChange={(v) => setForm((f) => ({ ...f, scholarship_description_ar: v }))} dir="rtl" />
               </div>
 
               <div className="flex items-center gap-3 pt-2">
@@ -657,7 +683,10 @@ export default function AdminCoursesPage() {
               <EnrichPreviewSection label="Description (TR)" value={enrichPreview.data.fields.description_tr} />
               <EnrichPreviewSection label="Description (FA)" value={enrichPreview.data.fields.description_fa} rtl />
               <EnrichPreviewSection label="Description (AR)" value={enrichPreview.data.fields.description_ar} rtl />
-              <EnrichPreviewSection label="Admission Requirements" value={enrichPreview.data.fields.admission_requirements} />
+              <EnrichPreviewSection label="Admission Requirements (EN)" value={enrichPreview.data.fields.admission_requirements} />
+              <EnrichPreviewSection label="Admission Requirements (TR)" value={enrichPreview.data.fields.admission_requirements_tr} />
+              <EnrichPreviewSection label="Admission Requirements (FA)" value={enrichPreview.data.fields.admission_requirements_fa} rtl />
+              <EnrichPreviewSection label="Admission Requirements (AR)" value={enrichPreview.data.fields.admission_requirements_ar} rtl />
 
               <div className="grid grid-cols-2 gap-4">
                 <EnrichPreviewCell label="Quota — Total" value={enrichPreview.data.fields.quota_total != null ? String(enrichPreview.data.fields.quota_total) : null} />
@@ -668,7 +697,10 @@ export default function AdminCoursesPage() {
                 <EnrichPreviewCell label="Thesis Option" value={enrichPreview.data.fields.thesis_option} />
               </div>
 
-              <EnrichPreviewSection label="Scholarship Description" value={enrichPreview.data.fields.scholarship_description} />
+              <EnrichPreviewSection label="Scholarship Description (EN)" value={enrichPreview.data.fields.scholarship_description} />
+              <EnrichPreviewSection label="Scholarship Description (TR)" value={enrichPreview.data.fields.scholarship_description_tr} />
+              <EnrichPreviewSection label="Scholarship Description (FA)" value={enrichPreview.data.fields.scholarship_description_fa} rtl />
+              <EnrichPreviewSection label="Scholarship Description (AR)" value={enrichPreview.data.fields.scholarship_description_ar} rtl />
             </div>
 
             {/* Footer */}

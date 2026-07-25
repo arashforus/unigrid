@@ -271,12 +271,18 @@ Return a single JSON object with EXACTLY these fields:
   "description_fa": "همان محتوا به فارسی، حدود ۱۵۰۰ کاراکتر",
   "description_ar": "نفس المحتوى باللغة العربية، حوالي ١٥٠٠ حرف",
   "admission_requirements": "English prose 300-500 chars: minimum GPA, language test scores (TOEFL/IELTS/YÖS), entrance exam requirements, key document requirements for international students. Use typical Turkish university standards if specifics are unknown.",
+  "admission_requirements_tr": "Aynı içeriğin Türkçe versiyonu",
+  "admission_requirements_fa": "همان محتوا به فارسی",
+  "admission_requirements_ar": "نفس المحتوى باللغة العربية",
   "quota_total": <total program seat quota as integer, or null if unknown>,
   "quota_international": <international student quota as integer, or null if unknown>,
   "application_deadline_fall": "Typical fall deadline for international applicants e.g. 'July 31', or null if unknown",
   "application_deadline_spring": "Typical spring deadline e.g. 'December 31', or null if program is fall-only or unknown",
   "scholarship_available": <true if merit/need scholarships are commonly offered, false if definitely none, null if unknown>,
   "scholarship_description": "Brief description of scholarship types and typical amounts if available, else null",
+  "scholarship_description_tr": "Aynı içeriğin Türkçe versiyonu, veya null",
+  "scholarship_description_fa": "همان محتوا به فارسی، یا null",
+  "scholarship_description_ar": "نفس المحتوى باللغة العربية، أو null",
   "thesis_option": ${isMasterOrDoc ? '"thesis", "non-thesis", or "both" — whether this program offers a thesis track, coursework-only track, or both' : "null"}
 }
 
@@ -296,6 +302,12 @@ Be factual. Use null for any field you are not confident about.`,
       description_ar: typeof data.description_ar === "string" ? data.description_ar : null,
       admission_requirements:
         typeof data.admission_requirements === "string" ? data.admission_requirements : null,
+      admission_requirements_tr:
+        typeof data.admission_requirements_tr === "string" ? data.admission_requirements_tr : null,
+      admission_requirements_fa:
+        typeof data.admission_requirements_fa === "string" ? data.admission_requirements_fa : null,
+      admission_requirements_ar:
+        typeof data.admission_requirements_ar === "string" ? data.admission_requirements_ar : null,
       quota_total: Number.isInteger(data.quota_total) ? data.quota_total : null,
       quota_international: Number.isInteger(data.quota_international) ? data.quota_international : null,
       application_deadline_fall:
@@ -306,6 +318,12 @@ Be factual. Use null for any field you are not confident about.`,
         typeof data.scholarship_available === "boolean" ? data.scholarship_available : null,
       scholarship_description:
         typeof data.scholarship_description === "string" ? data.scholarship_description : null,
+      scholarship_description_tr:
+        typeof data.scholarship_description_tr === "string" ? data.scholarship_description_tr : null,
+      scholarship_description_fa:
+        typeof data.scholarship_description_fa === "string" ? data.scholarship_description_fa : null,
+      scholarship_description_ar:
+        typeof data.scholarship_description_ar === "string" ? data.scholarship_description_ar : null,
       thesis_option: ["thesis", "non-thesis", "both"].includes(data.thesis_option)
         ? data.thesis_option
         : null,

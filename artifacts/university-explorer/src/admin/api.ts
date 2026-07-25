@@ -101,12 +101,18 @@ export type AdminProgram = {
   description_fa: string | null;
   description_ar: string | null;
   admission_requirements: string | null;
+  admission_requirements_tr: string | null;
+  admission_requirements_fa: string | null;
+  admission_requirements_ar: string | null;
   quota_total: number | null;
   quota_international: number | null;
   application_deadline_fall: string | null;
   application_deadline_spring: string | null;
   scholarship_available: boolean | null;
   scholarship_description: string | null;
+  scholarship_description_tr: string | null;
+  scholarship_description_fa: string | null;
+  scholarship_description_ar: string | null;
   thesis_option: string | null;
   faculty_name: string | null;
   university_name: string | null;
@@ -120,12 +126,18 @@ export type ProgramEnrichFields = {
   description_fa: string | null;
   description_ar: string | null;
   admission_requirements: string | null;
+  admission_requirements_tr: string | null;
+  admission_requirements_fa: string | null;
+  admission_requirements_ar: string | null;
   quota_total: number | null;
   quota_international: number | null;
   application_deadline_fall: string | null;
   application_deadline_spring: string | null;
   scholarship_available: boolean | null;
   scholarship_description: string | null;
+  scholarship_description_tr: string | null;
+  scholarship_description_fa: string | null;
+  scholarship_description_ar: string | null;
   thesis_option: string | null;
 };
 

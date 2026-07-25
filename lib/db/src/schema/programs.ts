@@ -21,12 +21,18 @@ export const programsTable = pgTable("programs", {
   description_fa: text("description_fa"),
   description_ar: text("description_ar"),
   admission_requirements: text("admission_requirements"),
+  admission_requirements_tr: text("admission_requirements_tr"),
+  admission_requirements_fa: text("admission_requirements_fa"),
+  admission_requirements_ar: text("admission_requirements_ar"),
   quota_total: integer("quota_total"),
   quota_international: integer("quota_international"),
   application_deadline_fall: text("application_deadline_fall"),
   application_deadline_spring: text("application_deadline_spring"),
   scholarship_available: boolean("scholarship_available"),
   scholarship_description: text("scholarship_description"),
+  scholarship_description_tr: text("scholarship_description_tr"),
+  scholarship_description_fa: text("scholarship_description_fa"),
+  scholarship_description_ar: text("scholarship_description_ar"),
   thesis_option: text("thesis_option"), // 'thesis' | 'non-thesis' | 'both' — master/doctorate only
 });
 
