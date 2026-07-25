@@ -24,6 +24,14 @@ function localizeProgram(
     university_name?: string | null;
     university_slug?: string | null;
     university_logo?: string | null;
+    university_website_url?: string | null;
+    university_apply_url?: string | null;
+    university_rank_turkey?: number | null;
+    university_rank_world?: number | null;
+    university_established_year?: number | null;
+    university_students_total?: number | null;
+    university_students_international?: number | null;
+    university_campus_size_ha?: number | null;
     faculty_name?: string | null;
     city?: string | null;
     tuition_fees?: Array<{
@@ -32,7 +40,8 @@ function localizeProgram(
       academic_year: string;
       domestic_fee: string | null;
       international_fee: string | null;
-      currency: string;
+      domestic_currency: string;
+      international_currency: string;
     }>;
   },
 ) {
@@ -55,9 +64,18 @@ function localizeProgram(
     scholarship_available: p.scholarship_available ?? null,
     scholarship_description: (p[`scholarship_description_${lang}` as keyof typeof p] as string | null) ?? p.scholarship_description ?? null,
     thesis_option: p.thesis_option ?? null,
+    // University extras
     university_name: extras?.university_name ?? null,
     university_slug: extras?.university_slug ?? null,
     university_logo: extras?.university_logo ?? null,
+    university_website_url: extras?.university_website_url ?? null,
+    university_apply_url: extras?.university_apply_url ?? null,
+    university_rank_turkey: extras?.university_rank_turkey ?? null,
+    university_rank_world: extras?.university_rank_world ?? null,
+    university_established_year: extras?.university_established_year ?? null,
+    university_students_total: extras?.university_students_total ?? null,
+    university_students_international: extras?.university_students_international ?? null,
+    university_campus_size_ha: extras?.university_campus_size_ha ?? null,
     faculty_name: extras?.faculty_name ?? null,
     city: extras?.city ?? null,
     tuition_fees: extras?.tuition_fees ?? [],
@@ -274,6 +292,14 @@ function buildExtras(
     university_name: university ? (university[`name_${l}` as const] ?? university.name_en) : null,
     university_slug: university?.slug ?? null,
     university_logo: university?.logo_url ?? null,
+    university_website_url: university?.website_url ?? null,
+    university_apply_url: university?.apply_url_international ?? null,
+    university_rank_turkey: university?.rank_turkey ?? null,
+    university_rank_world: university?.rank_world ?? null,
+    university_established_year: university?.established_year ?? null,
+    university_students_total: university?.students_total ?? null,
+    university_students_international: university?.students_international ?? null,
+    university_campus_size_ha: university?.campus_size_ha ?? null,
     faculty_name: faculty ? (faculty[`name_${l}` as const] ?? faculty.name_en) : null,
     city: university ? (university[`city_${l}` as const] ?? university.city_en) : null,
     tuition_fees: (tuitionMap.get(p.id) ?? []).map((f) => ({
@@ -343,6 +369,14 @@ router.get("/programs/detail", async (req, res) => {
           : null,
         university_slug: university?.slug ?? null,
         university_logo: university?.logo_url ?? null,
+        university_website_url: university?.website_url ?? null,
+        university_apply_url: university?.apply_url_international ?? null,
+        university_rank_turkey: university?.rank_turkey ?? null,
+        university_rank_world: university?.rank_world ?? null,
+        university_established_year: university?.established_year ?? null,
+        university_students_total: university?.students_total ?? null,
+        university_students_international: university?.students_international ?? null,
+        university_campus_size_ha: university?.campus_size_ha ?? null,
         faculty_name: faculty ? (faculty[`name_${l}` as const] ?? faculty.name_en) : null,
         city: university
           ? (university[`city_${l}` as const] ?? university.city_en)

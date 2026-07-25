@@ -7,6 +7,7 @@ import { DirectionalIcon } from '@/components/DirectionalIcon';
 import {
   ArrowLeft, Banknote, Clock, Globe, MapPin, Building2, ExternalLink, HeartHandshake,
   GraduationCap, Users, CalendarDays, BookOpen, CheckCircle2, XCircle, Award,
+  Trophy, TreePine, School,
 } from 'lucide-react';
 
 type EnrichedFields = {
@@ -19,6 +20,16 @@ type EnrichedFields = {
   scholarship_available?: boolean | null;
   scholarship_description?: string | null;
   thesis_option?: string | null;
+  // university extras
+  university_logo?: string | null;
+  university_website_url?: string | null;
+  university_apply_url?: string | null;
+  university_rank_turkey?: number | null;
+  university_rank_world?: number | null;
+  university_established_year?: number | null;
+  university_students_total?: number | null;
+  university_students_international?: number | null;
+  university_campus_size_ha?: number | null;
 };
 
 export default function ProgramDetail() {
@@ -63,6 +74,8 @@ export default function ProgramDetail() {
     program.application_deadline_spring ||
     program.scholarship_available != null;
 
+  const applyUrl = program.university_apply_url || program.university_website_url || '#';
+
   return (
     <div className="min-h-[100dvh] pt-16 bg-background">
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -106,6 +119,7 @@ export default function ProgramDetail() {
             </h1>
             <p className="text-xl text-muted-foreground mb-10">{program.faculty_name}</p>
 
+            {/* Core quick-facts grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-y border-border">
               <div>
                 <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1.5">
@@ -117,7 +131,7 @@ export default function ProgramDetail() {
                 <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1.5">
                   <Clock className="w-4 h-4" /> Duration
                 </div>
-                <div className="font-semibold">{program.duration_years} Years</div>
+                <div className="font-semibold">{program.duration_years} {program.duration_years === 1 ? 'Year' : 'Years'}</div>
               </div>
               <div>
                 <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1.5">
@@ -286,12 +300,14 @@ export default function ProgramDetail() {
                           ) : '-'}
                         </td>
                         <td className="px-6 py-4 text-muted-foreground">
-                          {fee.domestic_fee ? (
+                          {fee.domestic_fee && parseFloat(String(fee.domestic_fee)) > 0 ? (
                             <span>
                               {parseFloat(String(fee.domestic_fee)).toLocaleString()}{' '}
                               {(fee as any).domestic_currency ?? fee.currency}
                             </span>
-                          ) : '-'}
+                          ) : (
+                            <span className="text-emerald-500 font-medium">Free</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -300,6 +316,109 @@ export default function ProgramDetail() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ── University at a Glance ── */}
+        {program.university_name && (
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <School className="w-6 h-6 text-primary" />
+              University at a Glance
+            </h2>
+            <div className="bg-card border border-border rounded-2xl p-6">
+              {/* University header */}
+              <div className="flex items-center gap-4 mb-5 pb-5 border-b border-border">
+                <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center border border-border overflow-hidden shrink-0">
+                  {program.university_logo ? (
+                    <img src={program.university_logo} alt={program.university_name} className="w-full h-full object-contain p-2" />
+                  ) : (
+                    <Building2 className="w-7 h-7 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <Link
+                    href={`/university?slug=${program.university_slug}`}
+                    className="text-lg font-bold hover:text-primary transition-colors truncate block"
+                  >
+                    {program.university_name}
+                  </Link>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    {program.city}
+                    {program.university_established_year && (
+                      <>
+                        <span className="text-muted-foreground/30 mx-0.5">·</span>
+                        Est. {program.university_established_year}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {program.university_rank_turkey != null && (
+                  <div className="flex flex-col items-center bg-secondary/50 rounded-xl p-4 text-center">
+                    <Trophy className="w-5 h-5 text-primary mb-2" />
+                    <span className="text-xl font-bold leading-none">#{program.university_rank_turkey}</span>
+                    <span className="text-xs text-muted-foreground mt-1">Turkey Rank</span>
+                  </div>
+                )}
+                {program.university_rank_world != null && (
+                  <div className="flex flex-col items-center bg-secondary/50 rounded-xl p-4 text-center">
+                    <Trophy className="w-5 h-5 text-muted-foreground mb-2" />
+                    <span className="text-xl font-bold leading-none">{program.university_rank_world}</span>
+                    <span className="text-xs text-muted-foreground mt-1">World Rank</span>
+                  </div>
+                )}
+                {program.university_students_total != null && (
+                  <div className="flex flex-col items-center bg-secondary/50 rounded-xl p-4 text-center">
+                    <Users className="w-5 h-5 text-muted-foreground mb-2" />
+                    <span className="text-xl font-bold leading-none">
+                      {program.university_students_total >= 1000
+                        ? `${Math.round(program.university_students_total / 1000)}k`
+                        : program.university_students_total}
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1">Total Students</span>
+                  </div>
+                )}
+                {program.university_students_international != null && (
+                  <div className="flex flex-col items-center bg-secondary/50 rounded-xl p-4 text-center">
+                    <Globe className="w-5 h-5 text-muted-foreground mb-2" />
+                    <span className="text-xl font-bold leading-none">
+                      {program.university_students_international >= 1000
+                        ? `${Math.round(program.university_students_international / 1000)}k`
+                        : program.university_students_international}
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1">Intl Students</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Campus size */}
+              {program.university_campus_size_ha != null && (
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border text-sm text-muted-foreground">
+                  <TreePine className="w-4 h-4 shrink-0 text-emerald-500" />
+                  Campus size: <span className="font-semibold text-foreground">{program.university_campus_size_ha} ha</span>
+                </div>
+              )}
+
+              {/* Website link */}
+              {program.university_website_url && (
+                <div className="mt-3">
+                  <a
+                    href={program.university_website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {program.university_website_url.replace(/^https?:\/\//, '')}
+                  </a>
+                </div>
+              )}
+            </div>
+          </section>
         )}
 
         {/* ── Actions ── */}
@@ -311,9 +430,14 @@ export default function ProgramDetail() {
             <HeartHandshake className="w-5 h-5" />
             {t('services.consultingCta')}
           </Link>
-          <button className="flex-1 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold transition-all shadow-[0_0_30px_-10px_hsl(var(--primary))] flex items-center justify-center gap-2">
+          <a
+            href={applyUrl}
+            target={applyUrl !== '#' ? '_blank' : undefined}
+            rel="noopener noreferrer"
+            className="flex-1 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold transition-all shadow-[0_0_30px_-10px_hsl(var(--primary))] flex items-center justify-center gap-2"
+          >
             {t('explore.applyNow')} <ExternalLink className="w-5 h-5" />
-          </button>
+          </a>
         </div>
       </div>
     </div>
