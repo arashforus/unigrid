@@ -20,6 +20,19 @@ type FormState = {
     domestic_currency: string;
     international_currency: string;
   };
+  // Enriched fields
+  description_en: string;
+  description_tr: string;
+  description_fa: string;
+  description_ar: string;
+  admission_requirements: string;
+  quota_total: string;
+  quota_international: string;
+  application_deadline_fall: string;
+  application_deadline_spring: string;
+  scholarship_available: string; // 'true' | 'false' | ''
+  scholarship_description: string;
+  thesis_option: string; // 'thesis' | 'non-thesis' | 'both' | ''
 };
 
 const EMPTY_FORM: FormState = {
@@ -31,6 +44,12 @@ const EMPTY_FORM: FormState = {
   duration_years: 4,
   is_active: true,
   tuition_fee: { academic_year: '2024-2025', domestic_fee: '', international_fee: '', domestic_currency: 'TRY', international_currency: 'TRY' },
+  description_en: '', description_tr: '', description_fa: '', description_ar: '',
+  admission_requirements: '',
+  quota_total: '', quota_international: '',
+  application_deadline_fall: '', application_deadline_spring: '',
+  scholarship_available: '', scholarship_description: '',
+  thesis_option: '',
 };
 
 export default function AdminCoursesPage() {
@@ -136,6 +155,18 @@ export default function AdminCoursesPage() {
         domestic_currency: fee?.domestic_currency ?? 'TRY',
         international_currency: fee?.international_currency ?? 'TRY',
       },
+      description_en: p.description_en ?? '',
+      description_tr: p.description_tr ?? '',
+      description_fa: p.description_fa ?? '',
+      description_ar: p.description_ar ?? '',
+      admission_requirements: p.admission_requirements ?? '',
+      quota_total: p.quota_total != null ? String(p.quota_total) : '',
+      quota_international: p.quota_international != null ? String(p.quota_international) : '',
+      application_deadline_fall: p.application_deadline_fall ?? '',
+      application_deadline_spring: p.application_deadline_spring ?? '',
+      scholarship_available: p.scholarship_available != null ? String(p.scholarship_available) : '',
+      scholarship_description: p.scholarship_description ?? '',
+      thesis_option: p.thesis_option ?? '',
     });
     setError('');
     setModalOpen(true);
@@ -145,8 +176,29 @@ export default function AdminCoursesPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.faculty_id) { setError('Please select a faculty'); return; }
-    if (editingId) updateMutation.mutate({ id: editingId, data: form });
-    else createMutation.mutate(form);
+    // Serialize enriched fields: convert strings → proper types / nulls
+    const { tuition_fee, description_en, description_tr, description_fa, description_ar,
+      admission_requirements, quota_total, quota_international,
+      application_deadline_fall, application_deadline_spring,
+      scholarship_available, scholarship_description, thesis_option, ...base } = form;
+    const payload = {
+      ...base,
+      tuition_fee,
+      description_en: description_en || null,
+      description_tr: description_tr || null,
+      description_fa: description_fa || null,
+      description_ar: description_ar || null,
+      admission_requirements: admission_requirements || null,
+      quota_total: quota_total !== '' ? Number(quota_total) : null,
+      quota_international: quota_international !== '' ? Number(quota_international) : null,
+      application_deadline_fall: application_deadline_fall || null,
+      application_deadline_spring: application_deadline_spring || null,
+      scholarship_available: scholarship_available === 'true' ? true : scholarship_available === 'false' ? false : null,
+      scholarship_description: scholarship_description || null,
+      thesis_option: thesis_option || null,
+    };
+    if (editingId) updateMutation.mutate({ id: editingId, data: payload });
+    else createMutation.mutate(payload);
   }
 
   const saving = createMutation.isPending || updateMutation.isPending;
@@ -470,6 +522,56 @@ export default function AdminCoursesPage() {
                 </div>
               </div>
 
+              {/* Enriched Details */}
+              <div className="border-t border-border pt-4 space-y-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" /> Enriched Details
+                </h3>
+
+                <TextArea label="Description (EN)" value={form.description_en} onChange={(v) => setForm((f) => ({ ...f, description_en: v }))} />
+                <TextArea label="Description (TR)" value={form.description_tr} onChange={(v) => setForm((f) => ({ ...f, description_tr: v }))} />
+                <TextArea label="Description (FA)" value={form.description_fa} onChange={(v) => setForm((f) => ({ ...f, description_fa: v }))} dir="rtl" />
+                <TextArea label="Description (AR)" value={form.description_ar} onChange={(v) => setForm((f) => ({ ...f, description_ar: v }))} dir="rtl" />
+                <TextArea label="Admission Requirements" value={form.admission_requirements} onChange={(v) => setForm((f) => ({ ...f, admission_requirements: v }))} />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Quota (Total)" value={form.quota_total} onChange={(v) => setForm((f) => ({ ...f, quota_total: v }))} />
+                  <Field label="Quota (International)" value={form.quota_international} onChange={(v) => setForm((f) => ({ ...f, quota_international: v }))} />
+                  <Field label="Deadline — Fall" value={form.application_deadline_fall} onChange={(v) => setForm((f) => ({ ...f, application_deadline_fall: v }))} />
+                  <Field label="Deadline — Spring" value={form.application_deadline_spring} onChange={(v) => setForm((f) => ({ ...f, application_deadline_spring: v }))} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Scholarship Available</label>
+                    <select
+                      value={form.scholarship_available}
+                      onChange={(e) => setForm((f) => ({ ...f, scholarship_available: e.target.value }))}
+                      className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="">Unknown</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Thesis Option</label>
+                    <select
+                      value={form.thesis_option}
+                      onChange={(e) => setForm((f) => ({ ...f, thesis_option: e.target.value }))}
+                      className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="">N/A</option>
+                      <option value="thesis">Thesis</option>
+                      <option value="non-thesis">Non-Thesis</option>
+                      <option value="both">Both</option>
+                    </select>
+                  </div>
+                </div>
+
+                <TextArea label="Scholarship Description" value={form.scholarship_description} onChange={(v) => setForm((f) => ({ ...f, scholarship_description: v }))} />
+              </div>
+
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit" disabled={saving}
@@ -501,6 +603,21 @@ function Field({ label, value, onChange, required, mono, dir }: {
         type="text" required={required} dir={dir} value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all ${mono ? 'font-mono' : ''}`}
+      />
+    </div>
+  );
+}
+
+function TextArea({ label, value, onChange, dir }: {
+  label: string; value?: string; onChange: (v: string) => void; dir?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1.5">{label}</label>
+      <textarea
+        rows={3} dir={dir} value={value ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-y"
       />
     </div>
   );
