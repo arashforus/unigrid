@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { Link } from 'wouter';
-import { MapPin, ArrowRight, GraduationCap, Building2, Search, BookOpen, HeartHandshake, Sparkles, Clock, Newspaper } from 'lucide-react';
+import { MapPin, ArrowRight, GraduationCap, Building2, Search, BookOpen, HeartHandshake, Sparkles, Clock, Newspaper, Users, Trophy, CalendarDays } from 'lucide-react';
 import { 
   useGetStatsOverview, 
   useGetStatsCities, 
@@ -19,7 +19,7 @@ export default function Home() {
   const { data: stats } = useGetStatsOverview();
   const { data: cities } = useGetStatsCities();
   const { data: degreeStats } = useGetStatsProgramsByDegree();
-  const { data: featuredUnis } = useListUniversities({ type: 'state', lang: language as any });
+  const { data: featuredUnis } = useListUniversities({ lang: language as any });
 
   return (
     <div className="min-h-[100dvh] flex flex-col pt-16">
@@ -144,23 +144,60 @@ export default function Home() {
             {featuredUnis?.slice(0, 3).map((uni) => (
               <Link key={uni.id} href={`/university?slug=${uni.slug}`} className="group block h-full">
                 <div className="bg-card border border-border rounded-2xl p-6 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 hover:border-primary/30 flex flex-col">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center border border-border overflow-hidden">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center border border-border overflow-hidden shrink-0">
                       {uni.logo_url ? (
                         <img src={uni.logo_url} alt={uni.name} className="w-full h-full object-contain p-2" />
                       ) : (
-                        <Building2 className="w-8 h-8 text-muted-foreground" />
+                        <Building2 className="w-7 h-7 text-muted-foreground" />
                       )}
                     </div>
                     <span className="px-3 py-1 text-xs font-medium rounded-full bg-secondary text-secondary-foreground border border-border capitalize">
                       {t(`common.${uni.type}`)}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">{uni.name}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                    <MapPin className="w-4 h-4" />
+                  <h3 className="text-xl font-bold mb-1.5 group-hover:text-primary transition-colors leading-snug">{uni.name}</h3>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
                     {uni.city}
+                    {(uni as any).established_year && (
+                      <>
+                        <span className="text-muted-foreground/30 mx-0.5">·</span>
+                        <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                        Est. {(uni as any).established_year}
+                      </>
+                    )}
                   </div>
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-2 mb-5">
+                    {(uni as any).rank_turkey && (
+                      <div className="flex flex-col items-center bg-secondary/60 rounded-lg p-2 text-center">
+                        <Trophy className="w-3.5 h-3.5 text-primary mb-1" />
+                        <span className="text-base font-bold leading-none">#{(uni as any).rank_turkey}</span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">TR Rank</span>
+                      </div>
+                    )}
+                    {(uni as any).rank_world && (
+                      <div className="flex flex-col items-center bg-secondary/60 rounded-lg p-2 text-center">
+                        <Trophy className="w-3.5 h-3.5 text-muted-foreground mb-1" />
+                        <span className="text-base font-bold leading-none">{(uni as any).rank_world}</span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">World</span>
+                      </div>
+                    )}
+                    {(uni as any).students_total && (
+                      <div className="flex flex-col items-center bg-secondary/60 rounded-lg p-2 text-center">
+                        <Users className="w-3.5 h-3.5 text-muted-foreground mb-1" />
+                        <span className="text-base font-bold leading-none">
+                          {((uni as any).students_total as number) >= 1000
+                            ? `${Math.round((uni as any).students_total / 1000)}k`
+                            : (uni as any).students_total}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">Students</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="mt-auto flex items-center justify-between text-sm font-medium text-primary">
                     {t('explore.viewDetails')}
                     <DirectionalIcon icon={ArrowRight} className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
