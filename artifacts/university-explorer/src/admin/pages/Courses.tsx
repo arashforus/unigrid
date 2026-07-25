@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, type AdminProgram, type ProgramEnrichResult } from '@/admin/api';
+import { adminApi, type AdminProgram, type ProgramEnrichResult, type ProgramEnrichFields } from '@/admin/api';
 import { Loader2, Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const PAGE_SIZE = 20;
@@ -71,7 +71,7 @@ export default function AdminCoursesPage() {
   const [error, setError] = useState('');
 
   const [enrichingId, setEnrichingId] = useState<number | null>(null);
-  const [enrichPreview, setEnrichPreview] = useState<{ id: number; name: string; data: ProgramEnrichResult } | null>(null);
+  const [enrichPreview, setEnrichPreview] = useState<{ id: number; name: string; data: ProgramEnrichResult } | null>(null); // data.fields + data.meta
   const [confirmingSave, setConfirmingSave] = useState(false);
 
   async function handleEnrich(id: number, name: string) {
@@ -91,7 +91,7 @@ export default function AdminCoursesPage() {
     setConfirmingSave(true);
     try {
       const { id, data } = enrichPreview;
-      await adminApi.programs.update(id, data as any);
+      await adminApi.programs.update(id, data.fields as any);
       qc.invalidateQueries({ queryKey: ['admin', 'programs'] });
       setEnrichPreview(null);
     } catch (e: any) {
@@ -623,24 +623,52 @@ export default function AdminCoursesPage() {
               </button>
             </div>
 
+            {/* AI usage stats bar */}
+            <div className="flex items-center gap-4 px-6 py-2.5 bg-amber-500/8 border-b border-amber-500/20 text-xs text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">Model</span>
+                <code className="bg-secondary px-1.5 py-0.5 rounded text-[11px]">{enrichPreview.data.meta.model}</code>
+              </span>
+              <span className="text-border">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">Requests</span>
+                {enrichPreview.data.meta.requests}
+              </span>
+              <span className="text-border">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">Prompt tokens</span>
+                {enrichPreview.data.meta.usage.prompt_tokens.toLocaleString()}
+              </span>
+              <span className="text-border">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">Completion tokens</span>
+                {enrichPreview.data.meta.usage.completion_tokens.toLocaleString()}
+              </span>
+              <span className="text-border">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">Total tokens</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">{enrichPreview.data.meta.usage.total_tokens.toLocaleString()}</span>
+              </span>
+            </div>
+
             {/* Scrollable content */}
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
-              <EnrichPreviewSection label="Description (EN)" value={enrichPreview.data.description_en} />
-              <EnrichPreviewSection label="Description (TR)" value={enrichPreview.data.description_tr} />
-              <EnrichPreviewSection label="Description (FA)" value={enrichPreview.data.description_fa} rtl />
-              <EnrichPreviewSection label="Description (AR)" value={enrichPreview.data.description_ar} rtl />
-              <EnrichPreviewSection label="Admission Requirements" value={enrichPreview.data.admission_requirements} />
+              <EnrichPreviewSection label="Description (EN)" value={enrichPreview.data.fields.description_en} />
+              <EnrichPreviewSection label="Description (TR)" value={enrichPreview.data.fields.description_tr} />
+              <EnrichPreviewSection label="Description (FA)" value={enrichPreview.data.fields.description_fa} rtl />
+              <EnrichPreviewSection label="Description (AR)" value={enrichPreview.data.fields.description_ar} rtl />
+              <EnrichPreviewSection label="Admission Requirements" value={enrichPreview.data.fields.admission_requirements} />
 
               <div className="grid grid-cols-2 gap-4">
-                <EnrichPreviewCell label="Quota — Total" value={enrichPreview.data.quota_total != null ? String(enrichPreview.data.quota_total) : null} />
-                <EnrichPreviewCell label="Quota — International" value={enrichPreview.data.quota_international != null ? String(enrichPreview.data.quota_international) : null} />
-                <EnrichPreviewCell label="Deadline — Fall" value={enrichPreview.data.application_deadline_fall} />
-                <EnrichPreviewCell label="Deadline — Spring" value={enrichPreview.data.application_deadline_spring} />
-                <EnrichPreviewCell label="Scholarship" value={enrichPreview.data.scholarship_available === true ? 'Yes' : enrichPreview.data.scholarship_available === false ? 'No' : null} />
-                <EnrichPreviewCell label="Thesis Option" value={enrichPreview.data.thesis_option} />
+                <EnrichPreviewCell label="Quota — Total" value={enrichPreview.data.fields.quota_total != null ? String(enrichPreview.data.fields.quota_total) : null} />
+                <EnrichPreviewCell label="Quota — International" value={enrichPreview.data.fields.quota_international != null ? String(enrichPreview.data.fields.quota_international) : null} />
+                <EnrichPreviewCell label="Deadline — Fall" value={enrichPreview.data.fields.application_deadline_fall} />
+                <EnrichPreviewCell label="Deadline — Spring" value={enrichPreview.data.fields.application_deadline_spring} />
+                <EnrichPreviewCell label="Scholarship" value={enrichPreview.data.fields.scholarship_available === true ? 'Yes' : enrichPreview.data.fields.scholarship_available === false ? 'No' : null} />
+                <EnrichPreviewCell label="Thesis Option" value={enrichPreview.data.fields.thesis_option} />
               </div>
 
-              <EnrichPreviewSection label="Scholarship Description" value={enrichPreview.data.scholarship_description} />
+              <EnrichPreviewSection label="Scholarship Description" value={enrichPreview.data.fields.scholarship_description} />
             </div>
 
             {/* Footer */}

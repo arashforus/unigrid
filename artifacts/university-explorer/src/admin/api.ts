@@ -114,7 +114,7 @@ export type AdminProgram = {
   tuition_fees: AdminTuitionFee[];
 };
 
-export type ProgramEnrichResult = {
+export type ProgramEnrichFields = {
   description_en: string | null;
   description_tr: string | null;
   description_fa: string | null;
@@ -127,6 +127,15 @@ export type ProgramEnrichResult = {
   scholarship_available: boolean | null;
   scholarship_description: string | null;
   thesis_option: string | null;
+};
+
+export type ProgramEnrichResult = {
+  fields: ProgramEnrichFields;
+  meta: {
+    model: string;
+    requests: number;
+    usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  };
 };
 
 export type AdminTask = {

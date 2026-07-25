@@ -312,7 +312,18 @@ Be factual. Use null for any field you are not confident about.`,
     };
 
     // Return the enriched data as a preview — the client decides whether to save it.
-    res.json(update);
+    res.json({
+      fields: update,
+      meta: {
+        model: completion.model,
+        requests: 1,
+        usage: {
+          prompt_tokens: completion.usage?.prompt_tokens ?? 0,
+          completion_tokens: completion.usage?.completion_tokens ?? 0,
+          total_tokens: completion.usage?.total_tokens ?? 0,
+        },
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to AI-enrich program");
     res.status(500).json({ error: "Internal server error" });
