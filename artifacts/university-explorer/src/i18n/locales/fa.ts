@@ -183,6 +183,9 @@ export default {
     sectionSubtitle: "از آخرین تحولات آموزش عالی ترکیه، بورسیه‌ها و زندگی دانشجویی مطلع باشید.",
     readMore: "بیشتر بخوانید",
     minRead: "دقیقه خواندن",
+    backToHome: "بازگشت به صفحه اصلی",
+    notFound: "مقاله پیدا نشد.",
+    contentComingSoon: "محتوای کامل مقاله به زودی منتشر می‌شود.",
     articles: [
       {
         category: "بورسیه‌ها",

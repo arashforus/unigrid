@@ -183,6 +183,9 @@ export default {
     sectionSubtitle: "Stay informed with the latest updates on Turkish higher education, scholarships, and student life.",
     readMore: "Read more",
     minRead: "min read",
+    backToHome: "Back to Home",
+    notFound: "Article not found.",
+    contentComingSoon: "Full article content coming soon.",
     articles: [
       {
         category: "Scholarships",

@@ -267,13 +267,13 @@ export default function Home() {
                 ? new Date(dateStr).toLocaleDateString(language === 'en' ? 'en-US' : language === 'tr' ? 'tr-TR' : language === 'fa' ? 'fa-IR' : 'ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
                 : '';
               return (
-                <motion.article
-                  key={article.id}
+                <Link key={article.id} href={`/news?slug=${article.slug}`} className="contents">
+              <motion.article
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 flex flex-col"
+                  className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 flex flex-col cursor-pointer"
                 >
                   <div className="relative h-48 overflow-hidden bg-secondary">
                     {article.cover_image_url ? (
@@ -325,6 +325,7 @@ export default function Home() {
                     </div>
                   </div>
                 </motion.article>
+              </Link>
               );
             })}
           </div>

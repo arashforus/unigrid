@@ -183,6 +183,9 @@ export default {
     sectionSubtitle: "Türk yükseköğretimi, burslar ve öğrenci yaşamına dair son gelişmelerden haberdar olun.",
     readMore: "Devamını oku",
     minRead: "dk okuma",
+    backToHome: "Ana Sayfaya Dön",
+    notFound: "Makale bulunamadı.",
+    contentComingSoon: "Makalenin tam içeriği yakında yayınlanacak.",
     articles: [
       {
         category: "Burslar",

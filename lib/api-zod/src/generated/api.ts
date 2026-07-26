@@ -240,6 +240,30 @@ export const ListNewsResponse = zod.array(ListNewsResponseItem)
 
 
 /**
+ * @summary Get a single published news article by slug
+ */
+export const GetNewsArticleQueryParams = zod.object({
+  "slug": zod.coerce.string(),
+  "lang": zod.enum(['en', 'tr', 'fa', 'ar']).optional()
+})
+
+export const GetNewsArticleResponse = zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "title": zod.string().describe('Localized title'),
+  "summary": zod.string().nullish().describe('Localized summary \/ excerpt'),
+  "cover_image_url": zod.string().nullish(),
+  "category": zod.string(),
+  "author": zod.string().nullish(),
+  "is_published": zod.boolean(),
+  "published_at": zod.coerce.date().nullish(),
+  "created_at": zod.coerce.date()
+}).and(zod.object({
+  "content": zod.string().nullish().describe('Full article content (Markdown)')
+}))
+
+
+/**
  * @summary Platform-wide statistics for the landing page
  */
 export const GetStatsOverviewResponse = zod.object({

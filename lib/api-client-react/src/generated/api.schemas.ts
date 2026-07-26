@@ -188,6 +188,14 @@ export interface NewsArticle {
   created_at: string;
 }
 
+export type NewsArticleFull = NewsArticle & ({
+  /**
+     * Full article content (Markdown)
+     * @nullable
+     */
+  content?: string | null;
+});
+
 export type ListUniversitiesParams = {
 /**
  * Filter by city (English slug)
@@ -323,6 +331,21 @@ export type ListNewsLang = typeof ListNewsLang[keyof typeof ListNewsLang];
 
 
 export const ListNewsLang = {
+  en: 'en',
+  tr: 'tr',
+  fa: 'fa',
+  ar: 'ar',
+} as const;
+
+export type GetNewsArticleParams = {
+slug: string;
+lang?: GetNewsArticleLang;
+};
+
+export type GetNewsArticleLang = typeof GetNewsArticleLang[keyof typeof GetNewsArticleLang];
+
+
+export const GetNewsArticleLang = {
   en: 'en',
   tr: 'tr',
   fa: 'fa',

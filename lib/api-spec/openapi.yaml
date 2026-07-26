@@ -270,6 +270,36 @@ paths:
                 items:
                   $ref: "#/components/schemas/NewsArticle"
 
+  /news/detail:
+    get:
+      operationId: getNewsArticle
+      tags: [news]
+      summary: Get a single published news article by slug
+      parameters:
+        - in: query
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+      responses:
+        "200":
+          description: The news article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticleFull"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /stats/overview:
     get:
       operationId: getStatsOverview
@@ -541,3 +571,12 @@ components:
         created_at:
           type: string
           format: date-time
+
+    NewsArticleFull:
+      allOf:
+        - $ref: "#/components/schemas/NewsArticle"
+        - type: object
+          properties:
+            content:
+              type: ["string", "null"]
+              description: Full article content (Markdown)

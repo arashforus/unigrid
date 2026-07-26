@@ -30,6 +30,7 @@ import AdminSettingsPage from '@/admin/pages/Settings';
 import AdminUniversityUrlsPage from '@/admin/pages/UniversityUrls';
 import AdminAiRequestsPage from '@/admin/pages/AiRequests';
 import AdminNewsPage from '@/admin/pages/News';
+import NewsDetail from '@/pages/NewsDetail';
 
 import '@/i18n'; // Initialize i18n
 
@@ -61,6 +62,7 @@ function Router() {
         <Route path="/privacy" component={Privacy} />
         <Route path="/terms" component={Terms} />
         <Route path="/faq" component={Faq} />
+        <Route path="/news" component={NewsDetail} />
         <Route path="/admin" component={() => <AdminLayout><AdminDashboardPage /></AdminLayout>} />
         <Route path="/admin/users" component={() => <AdminLayout><AdminUsersPage /></AdminLayout>} />
         <Route path="/admin/universities" component={() => <AdminLayout><AdminUniversitiesPage /></AdminLayout>} />

@@ -183,6 +183,9 @@ export default {
     sectionSubtitle: "ابقَ على اطلاع بآخر التطورات في التعليم العالي التركي والمنح الدراسية وحياة الطلاب.",
     readMore: "اقرأ المزيد",
     minRead: "د قراءة",
+    backToHome: "العودة إلى الرئيسية",
+    notFound: "المقالة غير موجودة.",
+    contentComingSoon: "محتوى المقالة الكامل قادم قريباً.",
     articles: [
       {
         category: "المنح الدراسية",
