@@ -284,6 +284,36 @@ export type FoundFee = {
   international_currency: string;
 };
 
+export type AiRequest = {
+  id: number;
+  created_at: string;
+  source: string;
+  model: string;
+  status: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  duration_ms: number | null;
+  request_text: string | null;
+  response_text: string | null;
+  error: string | null;
+  context: Record<string, unknown> | null;
+};
+
+export type AiRequestStats = {
+  total_requests: number | string;
+  total_tokens: number | string;
+  total_prompt_tokens: number | string;
+  total_completion_tokens: number | string;
+  avg_duration_ms: number | string | null;
+};
+
+export type AiRequestsResponse = {
+  data: AiRequest[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+  stats: AiRequestStats;
+};
+
 export const adminApi = {
   dashboard: () => request<AdminDashboard>('/dashboard'),
   stats: () => request<AdminStats>('/stats'),
@@ -338,6 +368,11 @@ export const adminApi = {
       list: () => request<AdminCrawlJob[]>('/crawler/jobs'),
       get: (id: number) => request<AdminCrawlJob>(`/crawler/jobs/${id}`),
     },
+  },
+  aiRequests: {
+    list: (page = 1, limit = 50) =>
+      request<AiRequestsResponse>(`/ai-requests?page=${page}&limit=${limit}`),
+    get: (id: number) => request<AiRequest>(`/ai-requests/${id}`),
   },
   feeCrawler: {
     run: (universityIds?: number[]) =>

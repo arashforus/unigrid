@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/auth';
 import {
   LayoutDashboard, Users, Building2, BookOpen, BarChart3,
-  ClipboardList, Settings as SettingsIcon, MapPin, LogOut, ShieldAlert, Loader2, Bot, DollarSign, Link2,
+  ClipboardList, Settings as SettingsIcon, MapPin, LogOut, ShieldAlert, Loader2, Bot, DollarSign, Link2, Sparkles,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/admin/crawler', label: 'YÖK Crawler', icon: Bot },
   { href: '/admin/fee-crawler', label: 'Fee Crawler', icon: DollarSign },
   { href: '/admin/university-urls', label: 'University URLs', icon: Link2 },
+  { href: '/admin/ai-requests', label: 'AI Requests', icon: Sparkles },
   { href: '/admin/statistics', label: 'Statistics', icon: BarChart3 },
   { href: '/admin/tasks', label: 'Tasks', icon: ClipboardList },
   { href: '/admin/settings', label: 'Settings', icon: SettingsIcon },

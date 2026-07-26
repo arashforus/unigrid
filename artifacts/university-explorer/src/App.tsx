@@ -28,6 +28,7 @@ import AdminStatisticsPage from '@/admin/pages/Statistics';
 import AdminTasksPage from '@/admin/pages/Tasks';
 import AdminSettingsPage from '@/admin/pages/Settings';
 import AdminUniversityUrlsPage from '@/admin/pages/UniversityUrls';
+import AdminAiRequestsPage from '@/admin/pages/AiRequests';
 
 import '@/i18n'; // Initialize i18n
 
@@ -69,6 +70,7 @@ function Router() {
         <Route path="/admin/tasks" component={() => <AdminLayout><AdminTasksPage /></AdminLayout>} />
         <Route path="/admin/settings" component={() => <AdminLayout><AdminSettingsPage /></AdminLayout>} />
         <Route path="/admin/university-urls" component={() => <AdminLayout><AdminUniversityUrlsPage /></AdminLayout>} />
+        <Route path="/admin/ai-requests" component={() => <AdminLayout><AdminAiRequestsPage /></AdminLayout>} />
         <Route component={NotFound} />
       </Switch>
     </>

@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
+import { logAiRequest } from "../../lib/aiLogger";
 
 async function resolveOpenAIKey(): Promise<string> {
   const [row] = await db.select().from(settingsTable).where(eq(settingsTable.key, "openai_api_key")).limit(1);
@@ -277,6 +278,7 @@ Return a single JSON object with EXACTLY these fields:
 
 Be factual. Use null for any field you are not confident about.`;
 
+    const t0 = Date.now();
     const completion = await client.chat.completions.create({
       model,
       response_format: { type: "json_object" },
@@ -293,8 +295,26 @@ Be factual. Use null for any field you are not confident about.`;
       ],
       max_completion_tokens: 4000,
     });
+    const duration_ms = Date.now() - t0;
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
+
+    await logAiRequest({
+      source: "program-enrich",
+      model: completion.model,
+      request_text: userPrompt,
+      response_text: raw,
+      prompt_tokens: completion.usage?.prompt_tokens ?? 0,
+      completion_tokens: completion.usage?.completion_tokens ?? 0,
+      total_tokens: completion.usage?.total_tokens ?? 0,
+      duration_ms,
+      status: "success",
+      context: {
+        program_id: id,
+        program_name: program.name_en,
+        university: university?.name_en,
+      },
+    });
     const data = JSON.parse(raw);
 
     const update = {

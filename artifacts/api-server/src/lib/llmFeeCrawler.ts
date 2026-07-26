@@ -41,6 +41,7 @@ async function getOpenAIModel(): Promise<string> {
 }
 import { eq, and, inArray } from "drizzle-orm";
 import { logger } from "./logger";
+import { logAiRequest } from "./aiLogger";
 
 // ---------------------------------------------------------------------------
 // Resolve API key: env var takes priority, then DB setting
@@ -144,23 +145,57 @@ Respond ONLY with this JSON structure, no markdown, no explanation:
 }`;
 
   const model = await getOpenAIModel();
-  const res = await openai.chat.completions.create({
+  const t0 = Date.now();
+  let raw = '{"fees":{}}';
+  let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+  let status: "success" | "error" = "success";
+  let errorMsg: string | undefined;
+
+  try {
+    const res = await openai.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      max_completion_tokens: 4000,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    });
+
+    usage = {
+      prompt_tokens: res.usage?.prompt_tokens ?? 0,
+      completion_tokens: res.usage?.completion_tokens ?? 0,
+      total_tokens: res.usage?.total_tokens ?? 0,
+    };
+    raw = res.choices[0]?.message?.content ?? '{"fees":{}}';
+  } catch (err) {
+    status = "error";
+    errorMsg = (err as Error).message;
+    await logAiRequest({
+      source: "fee-crawler",
+      model,
+      request_text: userPrompt,
+      status: "error",
+      error: errorMsg,
+      duration_ms: Date.now() - t0,
+      context: { university: universityName },
+    });
+    throw err;
+  }
+
+  await logAiRequest({
+    source: "fee-crawler",
     model,
-    response_format: { type: "json_object" },
-    max_completion_tokens: 4000,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
+    request_text: userPrompt,
+    response_text: raw,
+    prompt_tokens: usage.prompt_tokens,
+    completion_tokens: usage.completion_tokens,
+    total_tokens: usage.total_tokens,
+    duration_ms: Date.now() - t0,
+    status,
+    context: { university: universityName, program_count: programs.length },
   });
 
-  const usage = {
-    prompt_tokens: res.usage?.prompt_tokens ?? 0,
-    completion_tokens: res.usage?.completion_tokens ?? 0,
-    total_tokens: res.usage?.total_tokens ?? 0,
-  };
-
-  const raw = res.choices[0]?.message?.content ?? '{"fees":{}}';
   try {
     const parsed = JSON.parse(raw) as { fees: Record<string, LLMFeeEntry> };
     if (!parsed.fees || typeof parsed.fees !== "object") return { fees: {}, usage };
