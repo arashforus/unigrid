@@ -284,6 +284,32 @@ export type FoundFee = {
   international_currency: string;
 };
 
+export type NewsItem = {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string | null;
+  content: string | null;
+  cover_image_url: string | null;
+  category: string;
+  author: string | null;
+  is_published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NewsItemInput = {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  content?: string | null;
+  cover_image_url?: string | null;
+  category: string;
+  author?: string | null;
+  is_published: boolean;
+};
+
 export type AiRequest = {
   id: number;
   created_at: string;
@@ -368,6 +394,12 @@ export const adminApi = {
       list: () => request<AdminCrawlJob[]>('/crawler/jobs'),
       get: (id: number) => request<AdminCrawlJob>(`/crawler/jobs/${id}`),
     },
+  },
+  news: {
+    list: () => request<NewsItem[]>('/news'),
+    create: (data: NewsItemInput) => request<NewsItem>('/news', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Partial<NewsItemInput>) => request<NewsItem>(`/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove: (id: number) => request<{ ok: true }>(`/news/${id}`, { method: 'DELETE' }),
   },
   aiRequests: {
     list: (page = 1, limit = 50) =>

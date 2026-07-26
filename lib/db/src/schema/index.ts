@@ -8,3 +8,4 @@ export * from "./settings";
 export * from "./crawl_jobs";
 export * from "./fee_crawl_jobs";
 export * from "./ai_requests";
+export * from "./news";

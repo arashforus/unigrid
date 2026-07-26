@@ -11,6 +11,7 @@ import crawlerRouter from "./crawler";
 import feeCrawlerRouter from "./feeCrawler";
 import apiKeysRouter from "./apiKeys";
 import aiRequestsRouter from "./aiRequests";
+import newsRouter from "./news";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(crawlerRouter);
 router.use(feeCrawlerRouter);
 router.use(apiKeysRouter);
 router.use(aiRequestsRouter);
+router.use(newsRouter);
 
 export default router;
