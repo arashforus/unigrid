@@ -169,12 +169,6 @@ export default function NewsDetail() {
             {article.title}
           </h1>
 
-          {article.summary && (
-            <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-              {article.summary}
-            </p>
-          )}
-
           {/* Meta row */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             {formattedDate && (
