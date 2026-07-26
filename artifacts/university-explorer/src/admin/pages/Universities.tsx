@@ -384,6 +384,7 @@ export default function AdminUniversitiesPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [formError, setFormError] = useState('');
+  const [modalTab, setModalTab] = useState<'general' | 'location' | 'stats' | 'descriptions'>('general');
 
   // ── AI Enrich state ───────────────────────────────────────────────────────
   const [enrichState, setEnrichState] = useState<AIEnrichState>({ phase: 'idle' });
@@ -408,10 +409,10 @@ export default function AdminUniversitiesPage() {
 
   // ── Modal helpers ─────────────────────────────────────────────────────────
   function openCreate() {
-    setEditingId(null); setForm(EMPTY_FORM); setFormError(''); setModalOpen(true);
+    setEditingId(null); setForm(EMPTY_FORM); setFormError(''); setModalTab('general'); setModalOpen(true);
   }
   function openEdit(u: AdminUniversity) {
-    setEditingId(u.id); setForm(u); setFormError(''); setModalOpen(true);
+    setEditingId(u.id); setForm(u); setFormError(''); setModalTab('general'); setModalOpen(true);
   }
   function closeModal() { setModalOpen(false); setFormError(''); }
   function handleSubmit(e: React.FormEvent) {
@@ -714,83 +715,127 @@ export default function AdminUniversitiesPage() {
           onClick={closeModal}
         >
           <div
-            className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-card border border-border rounded-2xl w-full max-w-2xl flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
               <h2 className="font-bold text-lg">{editingId ? 'Edit University' : 'Add University'}</h2>
               <button onClick={closeModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              {formError && (
-                <div className="px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">{formError}</div>
-              )}
+            {/* Tab bar */}
+            <div className="flex gap-1 px-6 pt-3 pb-0 border-b border-border shrink-0 overflow-x-auto">
+              {(
+                [
+                  { id: 'general',      label: 'General',      icon: Globe },
+                  { id: 'location',     label: 'Location',     icon: MapPin },
+                  { id: 'stats',        label: 'Stats',        icon: Trophy },
+                  { id: 'descriptions', label: 'Descriptions', icon: GraduationCap },
+                ] as const
+              ).map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setModalTab(id)}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                    modalTab === id
+                      ? 'border-primary text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Name (EN)" value={form.name_en} onChange={(v) => setForm((f) => ({ ...f, name_en: v, slug: editingId ? f.slug : slugify(v) }))} required />
-                <Field label="Name (TR)" value={form.name_tr} onChange={(v) => setForm((f) => ({ ...f, name_tr: v }))} required />
-                <Field label="Name (FA)" value={form.name_fa} onChange={(v) => setForm((f) => ({ ...f, name_fa: v }))} required dir="rtl" />
-                <Field label="Name (AR)" value={form.name_ar} onChange={(v) => setForm((f) => ({ ...f, name_ar: v }))} required dir="rtl" />
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              {/* Scrollable tab content */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                {formError && (
+                  <div className="px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">{formError}</div>
+                )}
+
+                {/* ── General tab ── */}
+                {modalTab === 'general' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Name (EN)" value={form.name_en} onChange={(v) => setForm((f) => ({ ...f, name_en: v, slug: editingId ? f.slug : slugify(v) }))} required />
+                      <Field label="Name (TR)" value={form.name_tr} onChange={(v) => setForm((f) => ({ ...f, name_tr: v }))} required />
+                      <Field label="Name (FA)" value={form.name_fa} onChange={(v) => setForm((f) => ({ ...f, name_fa: v }))} required dir="rtl" />
+                      <Field label="Name (AR)" value={form.name_ar} onChange={(v) => setForm((f) => ({ ...f, name_ar: v }))} required dir="rtl" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Slug" value={form.slug} onChange={(v) => setForm((f) => ({ ...f, slug: v }))} required mono />
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5">Type</label>
+                        <select
+                          value={form.type ?? 'state'}
+                          onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+                          className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                          <option value="state">State</option>
+                          <option value="private">Private</option>
+                          <option value="foundation">Foundation</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <Field label="Website URL" value={form.website_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, website_url: v }))} />
+                      <Field label="International Application URL" value={form.apply_url_international ?? ''} onChange={(v) => setForm((f) => ({ ...f, apply_url_international: v }))} />
+                      <Field label="Logo URL" value={form.logo_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, logo_url: v }))} />
+                    </div>
+                  </>
+                )}
+
+                {/* ── Location tab ── */}
+                {modalTab === 'location' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="City (EN)" value={form.city_en} onChange={(v) => setForm((f) => ({ ...f, city_en: v }))} required />
+                      <Field label="City (TR)" value={form.city_tr} onChange={(v) => setForm((f) => ({ ...f, city_tr: v }))} required />
+                      <Field label="City (FA)" value={form.city_fa} onChange={(v) => setForm((f) => ({ ...f, city_fa: v }))} required dir="rtl" />
+                      <Field label="City (AR)" value={form.city_ar} onChange={(v) => setForm((f) => ({ ...f, city_ar: v }))} required dir="rtl" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <NumberField label="Latitude" value={form.latitude ?? ''} onChange={(v) => setForm((f) => ({ ...f, latitude: v !== '' ? Number(v) : null }))} step="0.0001" />
+                      <NumberField label="Longitude" value={form.longitude ?? ''} onChange={(v) => setForm((f) => ({ ...f, longitude: v !== '' ? Number(v) : null }))} step="0.0001" />
+                    </div>
+                  </>
+                )}
+
+                {/* ── Stats tab ── */}
+                {modalTab === 'stats' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <NumberField label="YÖK University ID" value={form.yok_universite_id ?? ''} onChange={(v) => setForm((f) => ({ ...f, yok_universite_id: v !== '' ? Number(v) : undefined }))} />
+                    <NumberField label="Founded Year" value={form.established_year ?? ''} onChange={(v) => setForm((f) => ({ ...f, established_year: v !== '' ? Number(v) : null }))} />
+                    <NumberField label="Turkey Rank (QS)" value={form.rank_turkey ?? ''} onChange={(v) => setForm((f) => ({ ...f, rank_turkey: v !== '' ? Number(v) : null }))} />
+                    <NumberField label="World Rank (QS)" value={form.rank_world ?? ''} onChange={(v) => setForm((f) => ({ ...f, rank_world: v !== '' ? Number(v) : null }))} />
+                    <NumberField label="Total Students" value={form.students_total ?? ''} onChange={(v) => setForm((f) => ({ ...f, students_total: v !== '' ? Number(v) : null }))} />
+                    <NumberField label="International Students" value={form.students_international ?? ''} onChange={(v) => setForm((f) => ({ ...f, students_international: v !== '' ? Number(v) : null }))} />
+                    <NumberField label="Campus Size (ha)" value={form.campus_size_ha ?? ''} onChange={(v) => setForm((f) => ({ ...f, campus_size_ha: v !== '' ? Number(v) : null }))} />
+                  </div>
+                )}
+
+                {/* ── Descriptions tab ── */}
+                {modalTab === 'descriptions' && (
+                  <>
+                    <TextAreaField label="Description (EN)" value={form.description_en ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_en: v }))} />
+                    <TextAreaField label="Description (TR)" value={form.description_tr ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_tr: v }))} />
+                    <TextAreaField label="Description (FA)" value={form.description_fa ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_fa: v }))} dir="rtl" />
+                    <TextAreaField label="Description (AR)" value={form.description_ar ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_ar: v }))} dir="rtl" />
+                  </>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Slug" value={form.slug} onChange={(v) => setForm((f) => ({ ...f, slug: v }))} required mono />
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Type</label>
-                  <select
-                    value={form.type ?? 'state'}
-                    onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                    className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="state">State</option>
-                    <option value="private">Private</option>
-                    <option value="foundation">Foundation</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="City (EN)" value={form.city_en} onChange={(v) => setForm((f) => ({ ...f, city_en: v }))} required />
-                <Field label="City (TR)" value={form.city_tr} onChange={(v) => setForm((f) => ({ ...f, city_tr: v }))} required />
-                <Field label="City (FA)" value={form.city_fa} onChange={(v) => setForm((f) => ({ ...f, city_fa: v }))} required dir="rtl" />
-                <Field label="City (AR)" value={form.city_ar} onChange={(v) => setForm((f) => ({ ...f, city_ar: v }))} required dir="rtl" />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <Field label="Website URL" value={form.website_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, website_url: v }))} />
-                <Field label="International Application URL" value={form.apply_url_international ?? ''} onChange={(v) => setForm((f) => ({ ...f, apply_url_international: v }))} />
-                <Field label="Logo URL" value={form.logo_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, logo_url: v }))} />
-              </div>
-
-              {/* Stats & Location */}
-              <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-yellow-400" /> Stats &amp; Location
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <NumberField label="YÖK University ID" value={form.yok_universite_id ?? ''} onChange={(v) => setForm((f) => ({ ...f, yok_universite_id: v !== '' ? Number(v) : undefined }))} />
-                  <NumberField label="Founded Year" value={form.established_year ?? ''} onChange={(v) => setForm((f) => ({ ...f, established_year: v !== '' ? Number(v) : null }))} />
-                  <NumberField label="Turkey Rank (QS)" value={form.rank_turkey ?? ''} onChange={(v) => setForm((f) => ({ ...f, rank_turkey: v !== '' ? Number(v) : null }))} />
-                  <NumberField label="World Rank (QS)" value={form.rank_world ?? ''} onChange={(v) => setForm((f) => ({ ...f, rank_world: v !== '' ? Number(v) : null }))} />
-                  <NumberField label="Total Students" value={form.students_total ?? ''} onChange={(v) => setForm((f) => ({ ...f, students_total: v !== '' ? Number(v) : null }))} />
-                  <NumberField label="International Students" value={form.students_international ?? ''} onChange={(v) => setForm((f) => ({ ...f, students_international: v !== '' ? Number(v) : null }))} />
-                  <NumberField label="Campus Size (ha)" value={form.campus_size_ha ?? ''} onChange={(v) => setForm((f) => ({ ...f, campus_size_ha: v !== '' ? Number(v) : null }))} />
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <NumberField label="Latitude" value={form.latitude ?? ''} onChange={(v) => setForm((f) => ({ ...f, latitude: v !== '' ? Number(v) : null }))} step="0.0001" />
-                  <NumberField label="Longitude" value={form.longitude ?? ''} onChange={(v) => setForm((f) => ({ ...f, longitude: v !== '' ? Number(v) : null }))} step="0.0001" />
-                </div>
-              </div>
-
-              <TextAreaField label="Description (EN)" value={form.description_en ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_en: v }))} />
-              <TextAreaField label="Description (TR)" value={form.description_tr ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_tr: v }))} />
-              <TextAreaField label="Description (FA)" value={form.description_fa ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_fa: v }))} dir="rtl" />
-              <TextAreaField label="Description (AR)" value={form.description_ar ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_ar: v }))} dir="rtl" />
-
-              <div className="flex items-center gap-3 pt-2">
+              {/* Sticky footer */}
+              <div className="flex items-center gap-3 px-6 py-4 border-t border-border shrink-0">
                 <button
                   type="submit"
                   disabled={saving}
