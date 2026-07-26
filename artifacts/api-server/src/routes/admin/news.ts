@@ -7,10 +7,22 @@ import { z } from "zod";
 const router = Router();
 
 const newsSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
-  summary: z.string().nullable().optional(),
-  content: z.string().nullable().optional(),
+  title_en: z.string().min(1, "English title is required"),
+  title_tr: z.string().nullable().optional(),
+  title_fa: z.string().nullable().optional(),
+  title_ar: z.string().nullable().optional(),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
+  summary_en: z.string().nullable().optional(),
+  summary_tr: z.string().nullable().optional(),
+  summary_fa: z.string().nullable().optional(),
+  summary_ar: z.string().nullable().optional(),
+  content_en: z.string().nullable().optional(),
+  content_tr: z.string().nullable().optional(),
+  content_fa: z.string().nullable().optional(),
+  content_ar: z.string().nullable().optional(),
   cover_image_url: z.string().url().nullable().optional().or(z.literal("")),
   category: z.string().min(1).default("general"),
   author: z.string().nullable().optional(),
@@ -22,10 +34,7 @@ const newsUpdateSchema = newsSchema.partial();
 // GET /admin/news
 router.get("/news", async (req, res) => {
   try {
-    const rows = await db
-      .select()
-      .from(newsTable)
-      .orderBy(desc(newsTable.created_at));
+    const rows = await db.select().from(newsTable).orderBy(desc(newsTable.created_at));
     res.json(rows);
   } catch (err) {
     req.log.error({ err }, "Failed to list news");
@@ -36,7 +45,10 @@ router.get("/news", async (req, res) => {
 // GET /admin/news/:id
 router.get("/news/:id", async (req, res) => {
   const id = Number(req.params.id);
-  if (!id || Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!id || Number.isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
   try {
     const [row] = await db.select().from(newsTable).where(eq(newsTable.id, id)).limit(1);
     if (!row) { res.status(404).json({ error: "Not found" }); return; }
@@ -78,17 +90,17 @@ router.post("/news", async (req, res) => {
 // PUT /admin/news/:id
 router.put("/news/:id", async (req, res) => {
   const id = Number(req.params.id);
-  if (!id || Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-
+  if (!id || Number.isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
   const parsed = newsUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid news data", details: parsed.error.flatten() });
     return;
   }
   const data = parsed.data;
-
   try {
-    // If toggling published on, set published_at if not already set
     const [existing] = await db.select().from(newsTable).where(eq(newsTable.id, id)).limit(1);
     if (!existing) { res.status(404).json({ error: "Not found" }); return; }
 
@@ -124,7 +136,10 @@ router.delete("/news/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   try {
-    const [deleted] = await db.delete(newsTable).where(eq(newsTable.id, id)).returning({ id: newsTable.id });
+    const [deleted] = await db
+      .delete(newsTable)
+      .where(eq(newsTable.id, id))
+      .returning({ id: newsTable.id });
     if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
     res.json({ ok: true });
   } catch (err) {

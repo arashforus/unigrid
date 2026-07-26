@@ -286,10 +286,19 @@ export type FoundFee = {
 
 export type NewsItem = {
   id: number;
-  title: string;
+  title_en: string;
+  title_tr: string | null;
+  title_fa: string | null;
+  title_ar: string | null;
   slug: string;
-  summary: string | null;
-  content: string | null;
+  summary_en: string | null;
+  summary_tr: string | null;
+  summary_fa: string | null;
+  summary_ar: string | null;
+  content_en: string | null;
+  content_tr: string | null;
+  content_fa: string | null;
+  content_ar: string | null;
   cover_image_url: string | null;
   category: string;
   author: string | null;
@@ -300,10 +309,19 @@ export type NewsItem = {
 };
 
 export type NewsItemInput = {
-  title: string;
+  title_en: string;
+  title_tr?: string | null;
+  title_fa?: string | null;
+  title_ar?: string | null;
   slug: string;
-  summary?: string | null;
-  content?: string | null;
+  summary_en?: string | null;
+  summary_tr?: string | null;
+  summary_fa?: string | null;
+  summary_ar?: string | null;
+  content_en?: string | null;
+  content_tr?: string | null;
+  content_fa?: string | null;
+  content_ar?: string | null;
   cover_image_url?: string | null;
   category: string;
   author?: string | null;
