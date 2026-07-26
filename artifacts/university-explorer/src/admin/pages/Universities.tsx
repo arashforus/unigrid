@@ -765,6 +765,26 @@ export default function AdminUniversitiesPage() {
                 <Field label="Logo URL" value={form.logo_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, logo_url: v }))} />
               </div>
 
+              {/* Stats & Location */}
+              <div className="border-t border-border pt-4">
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-yellow-400" /> Stats &amp; Location
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <NumberField label="YÖK University ID" value={form.yok_universite_id ?? ''} onChange={(v) => setForm((f) => ({ ...f, yok_universite_id: v !== '' ? Number(v) : undefined }))} />
+                  <NumberField label="Founded Year" value={form.established_year ?? ''} onChange={(v) => setForm((f) => ({ ...f, established_year: v !== '' ? Number(v) : null }))} />
+                  <NumberField label="Turkey Rank (QS)" value={form.rank_turkey ?? ''} onChange={(v) => setForm((f) => ({ ...f, rank_turkey: v !== '' ? Number(v) : null }))} />
+                  <NumberField label="World Rank (QS)" value={form.rank_world ?? ''} onChange={(v) => setForm((f) => ({ ...f, rank_world: v !== '' ? Number(v) : null }))} />
+                  <NumberField label="Total Students" value={form.students_total ?? ''} onChange={(v) => setForm((f) => ({ ...f, students_total: v !== '' ? Number(v) : null }))} />
+                  <NumberField label="International Students" value={form.students_international ?? ''} onChange={(v) => setForm((f) => ({ ...f, students_international: v !== '' ? Number(v) : null }))} />
+                  <NumberField label="Campus Size (ha)" value={form.campus_size_ha ?? ''} onChange={(v) => setForm((f) => ({ ...f, campus_size_ha: v !== '' ? Number(v) : null }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <NumberField label="Latitude" value={form.latitude ?? ''} onChange={(v) => setForm((f) => ({ ...f, latitude: v !== '' ? Number(v) : null }))} step="0.0001" />
+                  <NumberField label="Longitude" value={form.longitude ?? ''} onChange={(v) => setForm((f) => ({ ...f, longitude: v !== '' ? Number(v) : null }))} step="0.0001" />
+                </div>
+              </div>
+
               <TextAreaField label="Description (EN)" value={form.description_en ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_en: v }))} />
               <TextAreaField label="Description (TR)" value={form.description_tr ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_tr: v }))} />
               <TextAreaField label="Description (FA)" value={form.description_fa ?? ''} onChange={(v) => setForm((f) => ({ ...f, description_fa: v }))} dir="rtl" />
@@ -846,6 +866,23 @@ function TextAreaField({ label, value, onChange, dir }: {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
+      />
+    </div>
+  );
+}
+
+function NumberField({ label, value, onChange, step }: {
+  label: string; value: number | string; onChange: (v: string) => void; step?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1.5">{label}</label>
+      <input
+        type="number"
+        step={step ?? '1'}
+        value={value === null || value === undefined ? '' : value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
       />
     </div>
   );
