@@ -20,6 +20,8 @@ tags:
     description: Tuition fee operations
   - name: stats
     description: Statistics and summary operations
+  - name: news
+    description: News and insights
 paths:
   /healthz:
     get:
@@ -240,6 +242,33 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TuitionFee"
+
+  /news:
+    get:
+      operationId: listNews
+      tags: [news]
+      summary: List published news articles
+      parameters:
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: [en, tr, fa, ar]
+          description: Language for localized fields (defaults to en)
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Maximum number of articles to return (defaults to 10)
+      responses:
+        "200":
+          description: Published news articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsArticle"
 
   /stats/overview:
     get:
@@ -483,3 +512,32 @@ components:
           type: string
         program_count:
           type: integer
+
+    NewsArticle:
+      type: object
+      required: [id, slug, title, category, is_published, created_at]
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        title:
+          type: string
+          description: Localized title
+        summary:
+          type: ["string", "null"]
+          description: Localized summary / excerpt
+        cover_image_url:
+          type: ["string", "null"]
+        category:
+          type: string
+        author:
+          type: ["string", "null"]
+        is_published:
+          type: boolean
+        published_at:
+          type: ["string", "null"]
+          format: date-time
+        created_at:
+          type: string
+          format: date-time

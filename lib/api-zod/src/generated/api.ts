@@ -217,6 +217,29 @@ export const ListTuitionFeesResponse = zod.array(ListTuitionFeesResponseItem)
 
 
 /**
+ * @summary List published news articles
+ */
+export const ListNewsQueryParams = zod.object({
+  "lang": zod.enum(['en', 'tr', 'fa', 'ar']).optional().describe('Language for localized fields (defaults to en)'),
+  "limit": zod.coerce.number().optional().describe('Maximum number of articles to return (defaults to 10)')
+})
+
+export const ListNewsResponseItem = zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "title": zod.string().describe('Localized title'),
+  "summary": zod.string().nullish().describe('Localized summary \/ excerpt'),
+  "cover_image_url": zod.string().nullish(),
+  "category": zod.string(),
+  "author": zod.string().nullish(),
+  "is_published": zod.boolean(),
+  "published_at": zod.coerce.date().nullish(),
+  "created_at": zod.coerce.date()
+})
+export const ListNewsResponse = zod.array(ListNewsResponseItem)
+
+
+/**
  * @summary Platform-wide statistics for the landing page
  */
 export const GetStatsOverviewResponse = zod.object({

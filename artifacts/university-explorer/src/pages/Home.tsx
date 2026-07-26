@@ -6,7 +6,8 @@ import {
   useGetStatsOverview, 
   useGetStatsCities, 
   useGetStatsProgramsByDegree,
-  useListUniversities
+  useListUniversities,
+  useListNews
 } from '@workspace/api-client-react';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
 import { Footer } from '@/components/Footer';
@@ -20,6 +21,7 @@ export default function Home() {
   const { data: cities } = useGetStatsCities();
   const { data: degreeStats } = useGetStatsProgramsByDegree();
   const { data: featuredUnis } = useListUniversities({ lang: language as any });
+  const { data: newsArticles } = useListNews({ lang: language as any, limit: 3 });
 
   return (
     <div className="min-h-[100dvh] flex flex-col pt-16">
@@ -259,62 +261,72 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {(t('news.articles', { returnObjects: true }) as Array<{
-              category: string;
-              title: string;
-              excerpt: string;
-              date: string;
-              readTime: string;
-              image: string;
-            }>).map((article, i) => (
-              <motion.article
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 flex flex-col"
-              >
-                <div className="relative h-48 overflow-hidden bg-secondary">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    width={800}
-                    height={400}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <span className="absolute top-3 start-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
-                    {article.category}
-                  </span>
-                </div>
-
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                    <time dateTime={article.date}>{article.date}</time>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground/40" aria-hidden="true" />
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" aria-hidden="true" />
-                      {article.readTime} {t('news.minRead')}
+            {(newsArticles ?? []).map((article, i) => {
+              const dateStr = article.published_at ?? article.created_at;
+              const formattedDate = dateStr
+                ? new Date(dateStr).toLocaleDateString(language === 'en' ? 'en-US' : language === 'tr' ? 'tr-TR' : language === 'fa' ? 'fa-IR' : 'ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
+                : '';
+              return (
+                <motion.article
+                  key={article.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 flex flex-col"
+                >
+                  <div className="relative h-48 overflow-hidden bg-secondary">
+                    {article.cover_image_url ? (
+                      <img
+                        src={article.cover_image_url}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        width={800}
+                        height={400}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <Newspaper className="w-12 h-12 text-primary/30" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <span className="absolute top-3 start-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
+                      {article.category}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold leading-snug mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                    {article.title}
-                  </h3>
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                      {formattedDate && (
+                        <time dateTime={dateStr ?? undefined}>{formattedDate}</time>
+                      )}
+                      {article.author && (
+                        <>
+                          <span className="w-1 h-1 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+                          <span>{article.author}</span>
+                        </>
+                      )}
+                    </div>
 
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-5 flex-1">
-                    {article.excerpt}
-                  </p>
+                    <h3 className="text-lg font-bold leading-snug mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                      {article.title}
+                    </h3>
 
-                  <div className="flex items-center gap-1.5 text-sm font-medium text-primary mt-auto">
-                    {t('news.readMore')}
-                    <DirectionalIcon icon={ArrowRight} className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    {article.summary && (
+                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-5 flex-1">
+                        {article.summary}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-primary mt-auto">
+                      {t('news.readMore')}
+                      <DirectionalIcon icon={ArrowRight} className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                </div>
-              </motion.article>
-            ))}
+                </motion.article>
+              );
+            })}
           </div>
         </div>
       </section>

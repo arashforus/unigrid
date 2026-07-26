@@ -167,6 +167,27 @@ export interface DegreeStats {
   program_count: number;
 }
 
+export interface NewsArticle {
+  id: number;
+  slug: string;
+  /** Localized title */
+  title: string;
+  /**
+     * Localized summary / excerpt
+     * @nullable
+     */
+  summary?: string | null;
+  /** @nullable */
+  cover_image_url?: string | null;
+  category: string;
+  /** @nullable */
+  author?: string | null;
+  is_published: boolean;
+  /** @nullable */
+  published_at?: string | null;
+  created_at: string;
+}
+
 export type ListUniversitiesParams = {
 /**
  * Filter by city (English slug)
@@ -286,4 +307,25 @@ export const GetProgramLang = {
 export type ListTuitionFeesParams = {
 program_id?: number;
 };
+
+export type ListNewsParams = {
+/**
+ * Language for localized fields (defaults to en)
+ */
+lang?: ListNewsLang;
+/**
+ * Maximum number of articles to return (defaults to 10)
+ */
+limit?: number;
+};
+
+export type ListNewsLang = typeof ListNewsLang[keyof typeof ListNewsLang];
+
+
+export const ListNewsLang = {
+  en: 'en',
+  tr: 'tr',
+  fa: 'fa',
+  ar: 'ar',
+} as const;
 
