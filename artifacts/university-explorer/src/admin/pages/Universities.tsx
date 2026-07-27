@@ -727,7 +727,7 @@ export default function AdminUniversitiesPage() {
             </div>
 
             {/* Tab bar */}
-            <div className="flex gap-1 px-6 pt-3 pb-0 border-b border-border shrink-0 overflow-x-auto">
+            <div className="flex gap-1 px-6 pt-3 pb-0 border-b border-border shrink-0">
               {(
                 [
                   { id: 'general',      label: 'General',      icon: Globe },
