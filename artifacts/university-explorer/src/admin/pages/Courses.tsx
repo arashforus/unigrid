@@ -246,7 +246,7 @@ export default function AdminCoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Courses</h1>
+          <h1 className="text-2xl font-bold">Programs</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {isLoading ? 'Loading…' : `${filtered.length} of ${programs?.length ?? 0} programs`}
           </p>
@@ -256,7 +256,7 @@ export default function AdminCoursesPage() {
           disabled={!faculties?.length}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
-          <Plus className="w-4 h-4" /> Add Course
+          <Plus className="w-4 h-4" /> Add Program
         </button>
       </div>
 
@@ -325,7 +325,7 @@ export default function AdminCoursesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
-                  <th className="text-start font-medium px-5 py-3">Course</th>
+                  <th className="text-start font-medium px-5 py-3">Program</th>
                   <th className="text-start font-medium px-5 py-3">University</th>
                   <th className="text-start font-medium px-5 py-3">Degree</th>
                   <th className="text-start font-medium px-5 py-3">Language</th>
@@ -391,7 +391,7 @@ export default function AdminCoursesPage() {
                 {pageRows.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
-                      {hasFilters ? 'No courses match your filters.' : 'No courses yet.'}
+                      {hasFilters ? 'No programs match your filters.' : 'No programs yet.'}
                     </td>
                   </tr>
                 )}
@@ -453,7 +453,7 @@ export default function AdminCoursesPage() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeModal}>
           <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card z-10">
-              <h2 className="font-bold text-lg">{editingId ? 'Edit Course' : 'Add Course'}</h2>
+              <h2 className="font-bold text-lg">{editingId ? 'Edit Program' : 'Add Program'}</h2>
               <button onClick={closeModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors">
                 <X className="w-4 h-4" />
               </button>
@@ -621,7 +621,7 @@ export default function AdminCoursesPage() {
                   className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingId ? 'Save Changes' : 'Create Course'}
+                  {editingId ? 'Save Changes' : 'Create Program'}
                 </button>
                 <button type="button" onClick={closeModal} className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary/70 font-semibold transition-colors">
                   Cancel
