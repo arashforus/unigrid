@@ -788,7 +788,31 @@ export default function AdminUniversitiesPage() {
                     <div className="grid grid-cols-1 gap-4">
                       <Field label="Website URL" value={form.website_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, website_url: v }))} />
                       <Field label="International Application URL" value={form.apply_url_international ?? ''} onChange={(v) => setForm((f) => ({ ...f, apply_url_international: v }))} />
-                      <Field label="Logo URL" value={form.logo_url ?? ''} onChange={(v) => setForm((f) => ({ ...f, logo_url: v }))} />
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5">Logo URL</label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            value={form.logo_url ?? ''}
+                            onChange={(e) => setForm((f) => ({ ...f, logo_url: e.target.value }))}
+                            className="flex-1 bg-input border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                            placeholder="https://…"
+                          />
+                          <div className="w-12 h-12 shrink-0 rounded-xl border border-border bg-secondary flex items-center justify-center overflow-hidden">
+                            {form.logo_url ? (
+                              <img
+                                key={form.logo_url}
+                                src={form.logo_url}
+                                alt="Logo preview"
+                                className="w-full h-full object-contain p-1"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <Globe className="w-5 h-5 text-muted-foreground/40" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </>
                 )}
