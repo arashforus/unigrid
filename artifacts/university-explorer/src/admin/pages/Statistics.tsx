@@ -33,11 +33,11 @@ export default function AdminStatisticsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Statistics</h1>
-        <p className="text-muted-foreground text-sm mt-1">Platform analytics across universities, courses, and users.</p>
+        <p className="text-muted-foreground text-sm mt-1">Platform analytics across universities, programs, and users.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Courses by Degree Type">
+        <ChartCard title="Programs by Degree Type">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.by_degree}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />

@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/universities', label: 'Universities', icon: Building2 },
-  { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+  { href: '/admin/courses', label: 'Programs', icon: BookOpen },
   { href: '/admin/news', label: 'News', icon: Newspaper },
   { href: '/admin/crawler', label: 'YÖK Crawler', icon: Bot },
   { href: '/admin/fee-crawler', label: 'Fee Crawler', icon: DollarSign },

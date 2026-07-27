@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
   const cards = [
     { label: 'Total Users', value: data.total_users, icon: Users, href: '/admin/users' },
     { label: 'Universities', value: data.total_universities, icon: Building2, href: '/admin/universities' },
-    { label: 'Courses', value: data.total_programs, icon: BookOpen, href: '/admin/courses' },
+    { label: 'Programs', value: data.total_programs, icon: BookOpen, href: '/admin/courses' },
     { label: 'New Inquiries', value: data.new_inquiries, icon: ClipboardList, href: '/admin/tasks' },
   ];
 
