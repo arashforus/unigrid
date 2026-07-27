@@ -194,7 +194,10 @@ export type ApiKeysState = {
 export type AdminDashboard = {
   total_users: number;
   total_universities: number;
+  total_faculties: number;
   total_programs: number;
+  active_programs: number;
+  scholarship_programs: number;
   total_inquiries: number;
   new_inquiries: number;
   recent_inquiries: AdminTask[];

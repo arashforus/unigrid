@@ -4,6 +4,7 @@ import {
   usersTable,
   universitiesTable,
   programsTable,
+  facultiesTable,
   inquiriesTable,
 } from "@workspace/db";
 import { sql, desc, gte } from "drizzle-orm";
@@ -13,11 +14,22 @@ const router = Router();
 // GET /admin/dashboard
 router.get("/dashboard", async (req, res) => {
   try {
-    const [[{ count: totalUsers }], [{ count: totalUniversities }], [{ count: totalPrograms }], [{ count: totalInquiries }], [{ count: newInquiries }]] =
-      await Promise.all([
+    const [
+      [{ count: totalUsers }],
+      [{ count: totalUniversities }],
+      [{ count: totalFaculties }],
+      [{ count: totalPrograms }],
+      [{ count: activePrograms }],
+      [{ count: scholarshipPrograms }],
+      [{ count: totalInquiries }],
+      [{ count: newInquiries }],
+    ] = await Promise.all([
         db.select({ count: sql<number>`count(*)::int` }).from(usersTable),
         db.select({ count: sql<number>`count(*)::int` }).from(universitiesTable),
+        db.select({ count: sql<number>`count(*)::int` }).from(facultiesTable),
         db.select({ count: sql<number>`count(*)::int` }).from(programsTable),
+        db.select({ count: sql<number>`count(*)::int` }).from(programsTable).where(sql`${programsTable.is_active} = true`),
+        db.select({ count: sql<number>`count(*)::int` }).from(programsTable).where(sql`${programsTable.scholarship_available} = true`),
         db.select({ count: sql<number>`count(*)::int` }).from(inquiriesTable),
         db
           .select({ count: sql<number>`count(*)::int` })
@@ -45,7 +57,10 @@ router.get("/dashboard", async (req, res) => {
     res.json({
       total_users: totalUsers,
       total_universities: totalUniversities,
+      total_faculties: totalFaculties,
       total_programs: totalPrograms,
+      active_programs: activePrograms,
+      scholarship_programs: scholarshipPrograms,
       total_inquiries: totalInquiries,
       new_inquiries: newInquiries,
       recent_inquiries: recentInquiries,

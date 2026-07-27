@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/admin/api';
-import { Users, Building2, BookOpen, ClipboardList, Loader2, ArrowUpRight } from 'lucide-react';
+import { Users, Building2, BookOpen, ClipboardList, Loader2, ArrowUpRight, GraduationCap, Award, LayoutList, BellRing } from 'lucide-react';
 import { Link } from 'wouter';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 
@@ -32,10 +32,14 @@ export default function AdminDashboardPage() {
   }
 
   const cards = [
-    { label: 'Total Users', value: data.total_users, icon: Users, href: '/admin/users' },
-    { label: 'Universities', value: data.total_universities, icon: Building2, href: '/admin/universities' },
-    { label: 'Programs', value: data.total_programs, icon: BookOpen, href: '/admin/courses' },
-    { label: 'New Inquiries', value: data.new_inquiries, icon: ClipboardList, href: '/admin/tasks' },
+    { label: 'Universities',         value: data.total_universities,   icon: Building2,    href: '/admin/universities' },
+    { label: 'Faculties',            value: data.total_faculties,       icon: LayoutList,   href: '/admin/universities' },
+    { label: 'Programs',             value: data.total_programs,        icon: BookOpen,     href: '/admin/courses' },
+    { label: 'Active Programs',      value: data.active_programs,       icon: GraduationCap, href: '/admin/courses' },
+    { label: 'With Scholarships',    value: data.scholarship_programs,  icon: Award,        href: '/admin/courses' },
+    { label: 'Users',                value: data.total_users,           icon: Users,        href: '/admin/users' },
+    { label: 'Total Inquiries',      value: data.total_inquiries,       icon: ClipboardList, href: '/admin/tasks' },
+    { label: 'New Inquiries',        value: data.new_inquiries,         icon: BellRing,     href: '/admin/tasks' },
   ];
 
   const chartData = data.inquiries_by_day.map((d) => ({ day: d.day.slice(5), count: d.count }));
@@ -47,7 +51,7 @@ export default function AdminDashboardPage() {
         <p className="text-muted-foreground text-sm mt-1">Overview of your platform's activity.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {cards.map((c) => (
           <Link
             key={c.label}
