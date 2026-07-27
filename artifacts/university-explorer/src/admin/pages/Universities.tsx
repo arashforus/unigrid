@@ -715,7 +715,7 @@ export default function AdminUniversitiesPage() {
           onClick={closeModal}
         >
           <div
-            className="bg-card border border-border rounded-2xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+            className="bg-card border border-border rounded-2xl w-full max-w-2xl flex flex-col h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
