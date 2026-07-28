@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, Send, User, RotateCcw, GraduationCap, MapPin, Globe, Award, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Send, User, RotateCcw, GraduationCap, MapPin, Globe, Award, ChevronRight, Loader2, AlertCircle, LogIn } from 'lucide-react';
+import { useAuth } from '@/contexts/auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -210,11 +211,14 @@ function StreamingBubble({ text }: { text: string }) {
 
 export default function AdvisorPage() {
   const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState('');
   const [error, setError] = useState('');
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -235,6 +239,11 @@ export default function AdvisorPage() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || streaming) return;
+
+    if (!user) {
+      setShowAuthGate(true);
+      return;
+    }
 
     setError('');
     const userMsg: Message = { role: 'user', content: trimmed };
@@ -346,6 +355,42 @@ export default function AdvisorPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col pt-16">
+
+      {/* Auth gate modal */}
+      {showAuthGate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          onClick={() => setShowAuthGate(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl p-8 max-w-sm w-full flex flex-col items-center text-center gap-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-violet-500/15 flex items-center justify-center">
+              <LogIn className="w-7 h-7 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold mb-1">{t('advisor.authGateTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('advisor.authGateSubtitle')}</p>
+            </div>
+            <div className="flex flex-col gap-2 w-full">
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+              >
+                {t('advisor.authGateLogin')}
+              </button>
+              <button
+                onClick={() => setShowAuthGate(false)}
+                className="w-full py-2.5 rounded-xl bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+              >
+                {t('advisor.authGateCancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Page header */}
       <div className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-16 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">

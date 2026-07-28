@@ -24,6 +24,10 @@ export default {
     suggested3: "Burs destekli yüksek lisans programına ihtiyacım var",
     suggested4: "İstanbul'daki en iyi devlet üniversitelerini karşılaştır",
     notConfigured: "AI Danışman yapılandırılmamış. Lütfen Admin → Ayarlar bölümüne OpenAI API anahtarınızı ekleyin.",
+    authGateTitle: "Devam etmek için giriş yapın",
+    authGateSubtitle: "AI Eğitim Danışmanı'nı kullanmak için ücretsiz hesap oluşturun veya giriş yapın.",
+    authGateLogin: "Giriş Yap / Kayıt Ol",
+    authGateCancel: "Belki sonra",
   },
   home: {
     heroTitle: "Türk Üniversitelerine Açılan Kapınız",

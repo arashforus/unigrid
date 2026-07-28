@@ -24,6 +24,10 @@ export default {
     suggested3: "I need a master's degree with scholarship support",
     suggested4: "Compare top state universities in Istanbul",
     notConfigured: "AI Advisor is not configured. Please add your OpenAI API key in Admin → Settings.",
+    authGateTitle: "Sign in to continue",
+    authGateSubtitle: "Create a free account or log in to use the AI Study Advisor.",
+    authGateLogin: "Log in / Register",
+    authGateCancel: "Maybe later",
   },
   home: {
     heroTitle: "Your Gateway to Turkish Universities",
