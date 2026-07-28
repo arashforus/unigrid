@@ -8,6 +8,7 @@ import inquiriesRouter from "./inquiries";
 import authRouter from "./auth";
 import adminRouter from "./admin";
 import newsRouter from "./news";
+import advisorRouter from "./advisor";
 
 const router: IRouter = Router();
 
@@ -19,6 +20,7 @@ router.use(programsRouter);
 router.use(statsRouter);
 router.use(inquiriesRouter);
 router.use(newsRouter);
+router.use(advisorRouter);
 router.use("/admin", adminRouter);
 
 export default router;
