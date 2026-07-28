@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/auth';
 import { DirectionalIcon } from '@/components/DirectionalIcon';
-import { MapPin, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'wouter';
 
 type Mode = 'login' | 'register';
@@ -42,16 +42,6 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,hsl(var(--primary)/0.12),transparent_60%)] pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-[0_0_30px_-5px_hsl(var(--primary))] mb-4">
-            <MapPin className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight">
-            Uni<span className="text-primary">Turkey</span>
-          </span>
-        </div>
-
         {/* Card */}
         <div className="bg-card border border-border rounded-3xl p-8 shadow-2xl shadow-black/20">
           {/* Mode Toggle */}
