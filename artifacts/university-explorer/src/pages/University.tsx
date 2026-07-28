@@ -55,8 +55,8 @@ export default function UniversityDetail() {
       <div className="relative border-b border-border bg-card/30">
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,hsl(var(--background)))] pointer-events-none opacity-50 z-0"></div>
         
-        <div className="max-w-5xl mx-auto px-6 pt-12 pb-8 relative z-10">
-          <Link href="/universities" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-8 relative z-10">
+          <Link href="/universities" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 md:mb-8">
             <DirectionalIcon icon={ArrowLeft} className="w-4 h-4" />
             {t('common.back')}
           </Link>
@@ -87,7 +87,7 @@ export default function UniversityDetail() {
                 )}
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">{uni.name}</h1>
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-6">{uni.name}</h1>
 
               <div className="flex flex-wrap gap-4">
                 <Link href="/services" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary text-sm font-semibold transition-colors">
@@ -164,19 +164,19 @@ export default function UniversityDetail() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-10">
         {/* Tabs */}
-        <div className="flex gap-8 border-b border-border mb-8">
+        <div className="flex gap-6 border-b border-border mb-8 overflow-x-auto scrollbar-none">
           <button 
             onClick={() => setActiveTab('programs')}
-            className={`pb-4 text-lg font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'programs' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`pb-4 text-base md:text-lg font-bold border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === 'programs' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             <GraduationCap className="w-5 h-5" />
             {t('university.programs')}
           </button>
           <button 
             onClick={() => setActiveTab('about')}
-            className={`pb-4 text-lg font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'about' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`pb-4 text-base md:text-lg font-bold border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === 'about' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             <BookOpen className="w-5 h-5" />
             {t('university.about')}

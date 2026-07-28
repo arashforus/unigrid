@@ -78,7 +78,7 @@ export default function ProgramDetail() {
 
   return (
     <div className="min-h-[100dvh] pt-16 bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Link
           href={`/university?slug=${program.university_slug}`}
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8"
@@ -88,7 +88,7 @@ export default function ProgramDetail() {
         </Link>
 
         {/* ── Header Card ── */}
-        <div className="bg-card border border-border rounded-3xl p-8 md:p-12 mb-8 relative overflow-hidden">
+        <div className="bg-card border border-border rounded-3xl p-5 md:p-12 mb-8 relative overflow-hidden">
           <div className="absolute top-0 end-0 p-8 opacity-5">
             <Building2 className="w-64 h-64" />
           </div>
@@ -114,7 +114,7 @@ export default function ProgramDetail() {
               )}
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 leading-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4 leading-tight">
               {program.name}
             </h1>
             <p className="text-xl text-muted-foreground mb-10">{program.faculty_name}</p>

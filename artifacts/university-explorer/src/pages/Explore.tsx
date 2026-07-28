@@ -62,6 +62,7 @@ export default function Explore() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -115,18 +116,44 @@ export default function Explore() {
 
   return (
     <div className="min-h-[100dvh] pt-16 flex flex-col md:flex-row">
+      {/* Mobile filter toggle bar */}
+      <div className="md:hidden sticky top-16 z-20 bg-background/90 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center justify-between gap-3">
+        <button
+          onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-secondary transition-colors"
+        >
+          <Filter className="w-4 h-4 text-primary" />
+          {t('explore.filters')}
+          {hasFilters && (
+            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+          )}
+        </button>
+        <span className="text-sm font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground">
+          {total.toLocaleString()} {t('explore.programs')}
+        </span>
+      </div>
+
       {/* Sidebar Filters */}
-      <aside className="w-full md:w-80 shrink-0 border-e border-border bg-sidebar/50 backdrop-blur-xl h-[calc(100vh-64px)] md:sticky md:top-16 overflow-y-auto p-6 flex flex-col gap-8">
+      <aside className={`w-full md:w-80 shrink-0 border-e border-border bg-sidebar/50 backdrop-blur-xl md:h-[calc(100vh-64px)] md:sticky md:top-16 overflow-y-auto p-6 flex flex-col gap-8 ${mobileFiltersOpen ? 'block' : 'hidden md:flex'}`}>
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Filter className="w-5 h-5 text-primary" />
             {t('explore.filters')}
           </h2>
-          {hasFilters && (
-            <button onClick={clearFilters} className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-              <X className="w-3 h-3" /> {t('explore.resetFilters')}
+          <div className="flex items-center gap-2">
+            {hasFilters && (
+              <button onClick={clearFilters} className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                <X className="w-3 h-3" /> {t('explore.resetFilters')}
+              </button>
+            )}
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"
+              aria-label="Close filters"
+            >
+              <X className="w-4 h-4" />
             </button>
-          )}
+          </div>
         </div>
 
         <div className="relative">
@@ -194,8 +221,8 @@ export default function Explore() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-10 bg-background/50">
-        <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 p-4 md:p-10 bg-background/50">
+        <div className="hidden md:flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">{t('explore.results')}</h1>
           <div className="flex items-center gap-3">
             {isFetching && !isLoading && (
@@ -206,6 +233,11 @@ export default function Explore() {
             </span>
           </div>
         </div>
+        {isFetching && !isLoading && (
+          <div className="md:hidden flex justify-end mb-4">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

@@ -40,10 +40,10 @@ export default function Home() {
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
             Premium University Discovery
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
             {t('home.heroTitle')}
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto font-light">
+          <p className="text-base sm:text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto font-light">
             {t('home.heroSubtitle')}
           </p>
           
@@ -67,23 +67,27 @@ export default function Home() {
       {/* Stats Strip */}
       <section className="border-y border-border bg-card/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-border">
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <span className="text-4xl font-bold text-primary mb-2">{stats?.state_universities || '-'}</span>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider">{t('home.stateUniversities')}</span>
-            </div>
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <span className="text-4xl font-bold text-primary mb-2">{stats?.private_universities || '-'}</span>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider">{t('home.privateUniversities')}</span>
-            </div>
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <span className="text-4xl font-bold text-foreground mb-2">{stats?.total_programs || '-'}</span>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider">{t('home.totalPrograms')}</span>
-            </div>
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <span className="text-4xl font-bold text-foreground mb-2">{stats?.total_cities || '-'}</span>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider">{t('home.totalCities')}</span>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-0">
+            {[
+              { value: stats?.state_universities, label: t('home.stateUniversities'), accent: true },
+              { value: stats?.private_universities, label: t('home.privateUniversities'), accent: true },
+              { value: stats?.total_programs, label: t('home.totalPrograms'), accent: false },
+              { value: stats?.total_cities, label: t('home.totalCities'), accent: false },
+            ].map((stat, i) => (
+              <div
+                key={i}
+                className={`flex flex-col items-center justify-center text-center py-6 px-4
+                  ${i % 2 === 0 ? 'border-e border-border' : ''}
+                  ${i < 2 ? 'border-b border-border md:border-b-0' : ''}
+                  ${i === 1 ? 'md:border-e md:border-border' : ''}
+                `}
+              >
+                <span className={`text-3xl sm:text-4xl font-bold mb-2 ${stat.accent ? 'text-primary' : 'text-foreground'}`}>
+                  {stat.value || '-'}
+                </span>
+                <span className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider">{stat.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -218,9 +222,9 @@ export default function Home() {
       </section>
 
       {/* Expert Consulting CTA */}
-      <section className="py-20 px-6 border-t border-border">
+      <section className="py-16 md:py-20 px-4 md:px-6 border-t border-border">
         <div className="max-w-5xl mx-auto">
-          <div className="relative bg-card border border-primary/20 rounded-3xl p-12 overflow-hidden">
+          <div className="relative bg-card border border-primary/20 rounded-3xl p-6 md:p-12 overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,hsl(var(--primary)/0.12),transparent_60%)]" />
             <div className="absolute end-0 top-0 w-80 h-80 opacity-[0.04]">
               <HeartHandshake className="w-full h-full text-primary" />
@@ -333,12 +337,12 @@ export default function Home() {
       </section>
 
       {/* Pathways Strip */}
-      <section className="py-24 bg-gradient-to-b from-primary/10 to-transparent border-t border-primary/20 relative overflow-hidden">
+      <section className="py-16 md:py-24 bg-gradient-to-b from-primary/10 to-transparent border-t border-primary/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=2000')] opacity-5 mix-blend-overlay bg-cover bg-center"></div>
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 text-center relative z-10">
           <BookOpen className="w-12 h-12 text-primary mx-auto mb-6" />
-          <h2 className="text-4xl font-bold mb-6">{t('home.internationalPathways')}</h2>
-          <p className="text-xl text-muted-foreground mb-10 font-light leading-relaxed">
+          <h2 className="text-2xl sm:text-4xl font-bold mb-6">{t('home.internationalPathways')}</h2>
+          <p className="text-base sm:text-xl text-muted-foreground mb-10 font-light leading-relaxed">
             {t('home.pathwayDesc')}
           </p>
           <Link href="/explore" className="inline-flex items-center justify-center bg-primary text-primary-foreground px-8 py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all hover:shadow-[0_0_40px_-10px_hsl(var(--primary))]">
