@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'wouter';
+import { useTranslation } from 'react-i18next';
 import { Sparkles, Send, User, RotateCcw, GraduationCap, MapPin, Globe, Award, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -55,12 +56,7 @@ function parseResponse(raw: string): { text: string; recommendations: Recommenda
   }
 }
 
-const SUGGESTED = [
-  'I want to study Computer Science or Engineering in English',
-  'What are the best medicine or pharmacy programs?',
-  "I need a master's degree with scholarship support",
-  'Compare top state universities in Istanbul',
-];
+// SUGGESTED is now built inside the component using t() so it reacts to language changes
 
 const DEGREE_COLORS: Record<string, string> = {
   bachelor:  'bg-blue-500/15 text-blue-400',
@@ -78,6 +74,7 @@ const TYPE_COLORS: Record<string, string> = {
 // ── Sub-components ───────────────────────────────────────────────────────────
 
 function ProgramCard({ rec }: { rec: Extract<Recommendation, { type: 'program' }> }) {
+  const { t } = useTranslation();
   return (
     <Link
       href={`/program?id=${rec.id}`}
@@ -104,18 +101,19 @@ function ProgramCard({ rec }: { rec: Extract<Recommendation, { type: 'program' }
         </span>
         {rec.scholarship && (
           <span className="flex items-center gap-1 text-xs text-emerald-400">
-            <Award className="w-3 h-3" />Scholarship
+            <Award className="w-3 h-3" />{t('program.scholarship')}
           </span>
         )}
       </div>
       <div className="flex items-center gap-1 text-xs font-semibold text-primary mt-1">
-        View program <ChevronRight className="w-3 h-3" />
+        {t('advisor.viewProgram')} <ChevronRight className="w-3 h-3" />
       </div>
     </Link>
   );
 }
 
 function UniversityCard({ rec }: { rec: Extract<Recommendation, { type: 'university' }> }) {
+  const { t } = useTranslation();
   return (
     <Link
       href={`/university?slug=${rec.slug}`}
@@ -135,22 +133,23 @@ function UniversityCard({ rec }: { rec: Extract<Recommendation, { type: 'univers
       </div>
       {rec.rank_turkey != null && (
         <p className="text-xs text-muted-foreground">
-          🏆 Turkey Rank <span className="text-foreground font-semibold">#{rec.rank_turkey}</span>
+          🏆 {t('university.rankTurkey')} <span className="text-foreground font-semibold">#{rec.rank_turkey}</span>
         </p>
       )}
       <div className="flex items-center gap-1 text-xs font-semibold text-primary mt-auto">
-        View university <ChevronRight className="w-3 h-3" />
+        {t('advisor.viewUniversity')} <ChevronRight className="w-3 h-3" />
       </div>
     </Link>
   );
 }
 
 function RecommendationRow({ recs }: { recs: Recommendation[] }) {
+  const { t } = useTranslation();
   if (!recs.length) return null;
   return (
     <div className="mt-3 -mx-1">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">
-        Recommended for you
+        {t('advisor.recommended')}
       </p>
       <div className="flex gap-3 overflow-x-auto pb-2 px-1 scrollbar-thin">
         {recs.map((rec, i) =>
@@ -210,6 +209,7 @@ function StreamingBubble({ text }: { text: string }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AdvisorPage() {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -218,6 +218,13 @@ export default function AdvisorPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const SUGGESTED = [
+    t('advisor.suggested1'),
+    t('advisor.suggested2'),
+    t('advisor.suggested3'),
+    t('advisor.suggested4'),
+  ];
 
   const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -347,8 +354,8 @@ export default function AdvisorPage() {
               <Sparkles className="w-5 h-5 text-violet-400" />
             </div>
             <div>
-              <h1 className="font-bold text-base leading-none">AI Study Advisor</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">Powered by your university catalog</p>
+              <h1 className="font-bold text-base leading-none">{t('advisor.title')}</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">{t('advisor.subtitle')}</p>
             </div>
           </div>
           {messages.length > 0 && (
@@ -356,7 +363,7 @@ export default function AdvisorPage() {
               onClick={reset}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-secondary"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> New chat
+              <RotateCcw className="w-3.5 h-3.5" /> {t('advisor.newChat')}
             </button>
           )}
         </div>
@@ -371,10 +378,9 @@ export default function AdvisorPage() {
             <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4">
               <Sparkles className="w-8 h-8 text-violet-400" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Your Personal Study Advisor</h2>
+            <h2 className="text-xl font-bold mb-2">{t('advisor.emptyTitle')}</h2>
             <p className="text-muted-foreground max-w-sm mb-8">
-              Tell me about your academic goals and I'll search across all universities
-              and programs to find your best matches in Turkey.
+              {t('advisor.emptySubtitle')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
               {SUGGESTED.map((q) => (
@@ -425,7 +431,7 @@ export default function AdvisorPage() {
               }}
               onKeyDown={handleKeyDown}
               disabled={streaming}
-              placeholder="Ask about programs, universities, scholarships…"
+              placeholder={t('advisor.placeholder')}
               rows={1}
               className="flex-1 bg-input border border-border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-60 overflow-hidden"
               style={{ height: '44px' }}
@@ -441,7 +447,7 @@ export default function AdvisorPage() {
             </button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            Press Enter to send · Shift+Enter for new line
+            {t('advisor.sendHint')}
           </p>
         </div>
       </div>

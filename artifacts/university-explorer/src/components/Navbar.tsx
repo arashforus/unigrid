@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/language';
 import { useAuth } from '@/contexts/auth';
 import { Link, useLocation } from 'wouter';
-import { MapPin, Globe, ChevronDown, Check, Search, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { MapPin, Globe, ChevronDown, Check, Search, User, LogOut, LayoutDashboard, Sparkles } from 'lucide-react';
 
 export function Navbar() {
   const { t } = useTranslation();
@@ -43,8 +43,12 @@ export function Navbar() {
             <Link href="/universities" className="text-muted-foreground hover:text-foreground transition-colors">
               {t('nav.universities')}
             </Link>
-            <Link href="/services" className="text-primary font-semibold hover:text-primary/80 transition-colors">
+            <Link href="/services" className="text-muted-foreground hover:text-foreground transition-colors">
               {t('nav.services')}
+            </Link>
+            <Link href="/advisor" className="flex items-center gap-1.5 text-violet-400 font-semibold hover:text-violet-300 transition-colors">
+              <Sparkles className="w-3.5 h-3.5" />
+              {t('nav.advisor')}
             </Link>
           </div>
 
